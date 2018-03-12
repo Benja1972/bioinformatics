@@ -22,15 +22,17 @@ rxt_df = rxx.to_dataframe()
 
 # --- States extraction
 trj = '9'
-#rxt_st1 = rxt_df[rxt_df['name'].isin(['E1','E2'])]
-rxt_st1 = rxt_df[rxt_df['name']=='E'+trj]
+rxt_st = rxt_df[rxt_df['name'].isin(['E1','E2'])]
+#rxt_st = rxt_df[rxt_df['name']=='E'+trj]
 
+
+rxt_st1 = (pb.BedTool.from_dataframe(rxt_st)).merge(d=50).to_dataframe()
 #~ fig =plt.figure(10)
 #~ lend =pd.DataFrame()
 #~ lend['len'] = rxt_df['end'] - rxt_df['start']
 
 #~ lend = lend[lend['len']<4000]
-#~ lend = lend[lend['len']>1000]  
+#~ lend = lend[lend['len']>2000]  
 #~ print lend.head(100)
 #plt.hist(np.log(lend['len']), bins=150)
 #~ plt.hist(lend['len'], bins=150)
@@ -94,7 +96,7 @@ tracks = [  'tracks/ChiP-seq_tracks/TLX3_TLX3_FE.bw',
             ]
 
 
-fig = plt.figure(1, (26., 14.))
+fig = plt.figure(1, (26., 10.))
 grid = ImageGrid(fig, 111, nrows_ncols=(1, len(tracks)), # nrows_ncols=(1, 5),
                  axes_pad=0.1,
                  add_all=True,
