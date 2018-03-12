@@ -1,0 +1,27 @@
+samples:  
+    - TAP_H3K4me1_repl1
+    - TAP_H3K4me1_repl2
+    - TAP_H3K4me2_repl1
+    - TAP_H3K4me2_repl2
+    - TAP_H3K4me3_repl1
+    - TAP_H3K4me3_repl2
+    - TAP_H3K9ac_repl1
+    - TAP_H3K9ac_repl2
+    - TAP_H3K9me3_repl1
+    - TAP_H3K9me3_repl2
+    - TAP_H3K27ac_repl1
+    - TAP_H3K27ac_repl2
+    - TAP_H3K27me3_repl1
+    - TAP_H3K27me3_repl2
+    - TAP_H3k36me3_repl1
+    - TAP_H3k36me3_repl2
+    - TAP_POLII_repl1
+    - TAP_POLII_repl2
+    - TAP_TLX3_repl1
+    - TAP_TLX3_repl2
+
+inputs:
+    - INP-TAP_1
+    - INP-TAP_2
+
+idx_bt2: .././references/
