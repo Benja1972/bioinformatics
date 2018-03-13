@@ -17,6 +17,8 @@ rxt= pb.BedTool(path+'RXT_14_segments.bed')
 rxx = rxt.slop(b=50, genome='mm9')
 
 tlx_peak = pb.BedTool('tracks/TLX3_TLX3_peaks.bed')
+sl = 1500
+tlx_peak = tlx_peak.slop(b=sl, genome='mm9')
 
 rxt_df = rxx.to_dataframe()
 
@@ -38,15 +40,15 @@ rxt_st1 = (pb.BedTool.from_dataframe(rxt_st)).merge(d=50).to_dataframe()
 #~ plt.hist(lend['len'], bins=150)
 
 
-rxt_st1 = rxt_st1[rxt_st1['end']-rxt_st1['start']<4000]
-rxt_st1 = rxt_st1[rxt_st1['end']-rxt_st1['start']>2000]
+#rxt_st1 = rxt_st1[rxt_st1['end']-rxt_st1['start']<4000]
+#rxt_st1 = rxt_st1[rxt_st1['end']-rxt_st1['start']>3000]
 
-#~ st1 = pb.BedTool.from_dataframe(rxt_st1)
-#~ reg = (tlx_peak+st1).sort()
-#~ #reg = (st1-tlx_peak).sort()
-#~ reg_dt = reg.to_dataframe()
+st1 = pb.BedTool.from_dataframe(rxt_st1)
+reg = (tlx_peak+st1).sort()
+#~ reg = (st1-tlx_peak).sort()
+reg_dt = reg.to_dataframe()
 
-reg_dt = rxt_st1.copy()
+#reg_dt = rxt_st1.copy()
 
 reg_dt['mid'] = ((reg_dt['end'] + reg_dt['start'])/2).astype('int')
 
@@ -72,31 +74,42 @@ x = np.linspace(-shr, shr, bn)
 
 
 
-
-
-
-
-
-
-tracks = [  'tracks/ChiP-seq_tracks/TLX3_TLX3_FE.bw',
+tracks = [  # --- TLX3
+            'tracks/ChiP-seq_tracks/TLX3_TLX3_FE.bw',
             'tracks/ChiP-seq_tracks/RAG_TLX3_repl1_FE.bw',
             'tracks/ChiP-seq_tracks/TAP_TLX3_repl2_FE.bw',
-            'tracks/ChiP-seq_tracks/TLX3_POLII_FE.bw',
-            'tracks/ChiP-seq_tracks/RAG_PolII_FK97-98_sort.bw',
-            'tracks/ChiP-seq_tracks/TAP_POLII_repl2_FE.bw',
-            'tracks/ChiP-seq_tracks/TLX3_H3K27ac_FE.bw',
-            'tracks/ChiP-seq_tracks/RAG_H3K27ac_repl1_FE.bw',
-            'tracks/ChiP-seq_tracks/TAP_H3K27ac_repl2_FE.bw',
-            'tracks/ChiP-seq_tracks/TLX3_H3K4me1_FE.bw',
-            'tracks/ChiP-seq_tracks/RAG_H3K4me1_repl1_FE.bw',
-            'tracks/ChiP-seq_tracks/TAP_H3K4me1_repl2_FE.bw',
-            'tracks/ChiP-seq_tracks/TLX3_H3K4me2_FE.bw',
-            'tracks/ChiP-seq_tracks/RAG_H3K4me2_FK89_sort.bw',
-            'tracks/ChiP-seq_tracks/TAP_H3K4me2_repl2_FE.bw'
+            # --- H3K27me3
+            'tracks/ChiP-seq_tracks/RAG_H3K27me3_FK95-96_sort.bw',
+            'tracks/ChiP-seq_tracks/TAP_H3K27me3_repl2_FE.bw',
+            'tracks/ChiP-seq_tracks/TLX3_H3K27me3_FE.bw',
+            # --- H3K4me3
+            'tracks/ChiP-seq_tracks/RAG_H3K4me3_FK91_FK92_sort.bw',
+            'tracks/ChiP-seq_tracks/TAP_H3K4me3_repl2_FE.bw',
+            'tracks/ChiP-seq_tracks/TLX3_H3K4me3_FE.bw',
+            # --- H3K9me3
+            'tracks/ChiP-seq_tracks/RAG_H3K9me3_sort.bw',
+            'tracks/ChiP-seq_tracks/TAP_H3K9me3_repl2_FE.bw',
+            'tracks/ChiP-seq_tracks/TLX3_H3K9me3_FE.bw',
+            #~ # ---- PolII
+            #~ 'tracks/ChiP-seq_tracks/TLX3_POLII_FE.bw',
+            #~ 'tracks/ChiP-seq_tracks/RAG_POLII_FK97-98_sort.bw',
+            #~ 'tracks/ChiP-seq_tracks/TAP_POLII_repl2_FE.bw',
+            #~ # --- H3K27ac
+            #~ 'tracks/ChiP-seq_tracks/TLX3_H3K27ac_FE.bw',
+            #~ 'tracks/ChiP-seq_tracks/RAG_H3K27ac_repl1_FE.bw',
+            #~ 'tracks/ChiP-seq_tracks/TAP_H3K27ac_repl2_FE.bw',
+            #~ # --- H3K4me1
+            #~ 'tracks/ChiP-seq_tracks/TLX3_H3K4me1_FE.bw',
+            #~ 'tracks/ChiP-seq_tracks/RAG_H3K4me1_repl1_FE.bw',
+            #~ 'tracks/ChiP-seq_tracks/TAP_H3K4me1_repl2_FE.bw',
+            #~ # --- H3K4me2
+            #~ 'tracks/ChiP-seq_tracks/TLX3_H3K4me2_FE.bw',
+            #~ 'tracks/ChiP-seq_tracks/RAG_H3K4me2_FK89_sort.bw',
+            #~ 'tracks/ChiP-seq_tracks/TAP_H3K4me2_repl2_FE.bw'
             ]
 
 
-fig = plt.figure(1, (26., 10.))
+fig = plt.figure(1, (26., 12.))
 grid = ImageGrid(fig, 111, nrows_ncols=(1, len(tracks)), # nrows_ncols=(1, 5),
                  axes_pad=0.1,
                  add_all=True,
@@ -108,8 +121,8 @@ for i,tr in enumerate(tracks):
     tr_sig = metaseq.genomic_signal(tr,'bigwig')
     arr = tr_sig.array(sm_Nkb, bins=bn, processes=processes)
     if i==0:
-        #i_a = arr.max(axis=1).argsort()
-        i_a = arr.mean(axis=1).argsort()
+        i_a = arr.max(axis=1).argsort()
+        #i_a = arr.mean(axis=1).argsort()
         arr = arr[i_a,:]
     else:
         arr = arr[i_a,:]
