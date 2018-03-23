@@ -11,7 +11,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # comment metaseq for Python3 (works only express)
-from metaseq.results_table import ResultsTable
+#from metaseq.results_table import ResultsTable
 
 # RNA expression examples from gseapy package
 # classes shoud be like this

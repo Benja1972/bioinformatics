@@ -166,6 +166,64 @@ gn =list(gt['gene'])
 
 
 
+## === GSEA analysis of all genes
+## run in Python3
+#tbn['Gene_name']=tbn.index
+
+
+tbn = tbn.dropna()
+tbn = tbn.iloc[:,:len(classes)+1]
+
+
+tbn.set_index(keys=tbn.columns[0], inplace=True)
+tbn.index=tbn.index.str.upper()
+
+
+
+
+
+tbn['Gene_name']=tbn.index
+
+tb_u = pd.concat([tbn['Gene_name'],tbn.iloc[:,:len(classes)]], axis=1)
+
+#~ tbn['Gene_name']=tbn['Gene_name'].str.upper()
+
+#~ tbn.set_index('Gene_name', drop=False, inplace=True)
+
+#~ tb_u = tbn.drop(['padj'],axis=1)
+
+
+
+
+#~ tbn.drop(['padj'],axis=1, inplace=True)
+
+#tb_u = pd.concat([tbn['Gene_name'],tbn.iloc[:,1:len(classes)+1]], axis=1)
+
+#~ g_set = 'tracks/GSEA_gene_sets/c7.all.v6.0.symbols.gmt'
+#~ out_dir = 'GSEA/gsea_TLXvsRAG_C7_Immuno'
+
+g_set = 'gene_lists/IMMPort/IMMPort.gmt'
+out_dir = 'GSEA/gsea_IMMPort'
+
+gs_res = gp.gsea.call(data=tb_u, 
+                        gene_sets = g_set, 
+                        cls=classes,
+                        max_size = 1000,
+                        top_enrich = 25,
+                        outdir=out_dir)
+
+gsea_results = gs_res.reset_index().sort_values('fdr',axis=0,ascending=True)
+
+with plt.style.context('ggplot'):
+    gsea_results.head(40).plot.bar(y='fdr',x='Term', figsize=(12, 6),fontsize=12)
+
+
+plt.savefig(out_dir+'/'+'TLX3vsRAG_IMMPort.pdf', format="pdf")
+
+
+
+
+
 
 
 

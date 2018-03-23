@@ -17,15 +17,15 @@ rxt= pb.BedTool(path+'RXT_14_segments.bed')
 rxx = rxt.slop(b=50, genome='mm9')
 
 tlx_peak = pb.BedTool('tracks/TLX3_TLX3_peaks.bed')
-sl = 1500
+sl = 100
 tlx_peak = tlx_peak.slop(b=sl, genome='mm9')
 
 rxt_df = rxx.to_dataframe()
 
 # --- States extraction
-trj = '9'
-rxt_st = rxt_df[rxt_df['name'].isin(['E1','E2'])]
-#rxt_st = rxt_df[rxt_df['name']=='E'+trj]
+trj = '12'
+#rxt_st = rxt_df[rxt_df['name'].isin(['E1','E2'])]
+rxt_st = rxt_df[rxt_df['name']=='E'+trj]
 
 
 rxt_st1 = (pb.BedTool.from_dataframe(rxt_st)).merge(d=50).to_dataframe()
@@ -45,6 +45,7 @@ rxt_st1 = (pb.BedTool.from_dataframe(rxt_st)).merge(d=50).to_dataframe()
 
 st1 = pb.BedTool.from_dataframe(rxt_st1)
 reg = (tlx_peak+st1).sort()
+#reg = (st1+ tlx_peak).sort()
 #~ reg = (st1-tlx_peak).sort()
 reg_dt = reg.to_dataframe()
 
@@ -79,33 +80,39 @@ tracks = [  # --- TLX3
             'tracks/ChiP-seq_tracks/RAG_TLX3_repl1_FE.bw',
             'tracks/ChiP-seq_tracks/TAP_TLX3_repl2_FE.bw',
             # --- H3K27me3
-            'tracks/ChiP-seq_tracks/RAG_H3K27me3_FK95-96_sort.bw',
+            #'tracks/ChiP-seq_tracks/RAG_H3K27me3_FK95-96_sort.bw',
             'tracks/ChiP-seq_tracks/TAP_H3K27me3_repl2_FE.bw',
             'tracks/ChiP-seq_tracks/TLX3_H3K27me3_FE.bw',
             # --- H3K4me3
-            'tracks/ChiP-seq_tracks/RAG_H3K4me3_FK91_FK92_sort.bw',
+            #'tracks/ChiP-seq_tracks/RAG_H3K4me3_FK91_FK92_sort.bw',
             'tracks/ChiP-seq_tracks/TAP_H3K4me3_repl2_FE.bw',
             'tracks/ChiP-seq_tracks/TLX3_H3K4me3_FE.bw',
             # --- H3K9me3
-            'tracks/ChiP-seq_tracks/RAG_H3K9me3_sort.bw',
+            #'tracks/ChiP-seq_tracks/RAG_H3K9me3_sort.bw',
             'tracks/ChiP-seq_tracks/TAP_H3K9me3_repl2_FE.bw',
             'tracks/ChiP-seq_tracks/TLX3_H3K9me3_FE.bw',
             #~ # ---- PolII
-            #~ 'tracks/ChiP-seq_tracks/TLX3_POLII_FE.bw',
-            #~ 'tracks/ChiP-seq_tracks/RAG_POLII_FK97-98_sort.bw',
-            #~ 'tracks/ChiP-seq_tracks/TAP_POLII_repl2_FE.bw',
+            'tracks/ChiP-seq_tracks/TLX3_POLII_FE.bw',
+            #'tracks/ChiP-seq_tracks/RAG_POLII_FK97-98_sort.bw',
+            'tracks/ChiP-seq_tracks/TAP_POLII_repl2_FE.bw',
             #~ # --- H3K27ac
-            #~ 'tracks/ChiP-seq_tracks/TLX3_H3K27ac_FE.bw',
-            #~ 'tracks/ChiP-seq_tracks/RAG_H3K27ac_repl1_FE.bw',
-            #~ 'tracks/ChiP-seq_tracks/TAP_H3K27ac_repl2_FE.bw',
+            'tracks/ChiP-seq_tracks/TLX3_H3K27ac_FE.bw',
+            'tracks/ChiP-seq_tracks/RAG_H3K27ac_repl1_FE.bw',
+            'tracks/ChiP-seq_tracks/TAP_H3K27ac_repl2_FE.bw',
             #~ # --- H3K4me1
-            #~ 'tracks/ChiP-seq_tracks/TLX3_H3K4me1_FE.bw',
-            #~ 'tracks/ChiP-seq_tracks/RAG_H3K4me1_repl1_FE.bw',
-            #~ 'tracks/ChiP-seq_tracks/TAP_H3K4me1_repl2_FE.bw',
+            'tracks/ChiP-seq_tracks/TLX3_H3K4me1_FE.bw',
+            'tracks/ChiP-seq_tracks/RAG_H3K4me1_repl1_FE.bw',
+            'tracks/ChiP-seq_tracks/TAP_H3K4me1_repl2_FE.bw',
             #~ # --- H3K4me2
-            #~ 'tracks/ChiP-seq_tracks/TLX3_H3K4me2_FE.bw',
-            #~ 'tracks/ChiP-seq_tracks/RAG_H3K4me2_FK89_sort.bw',
-            #~ 'tracks/ChiP-seq_tracks/TAP_H3K4me2_repl2_FE.bw'
+            'tracks/ChiP-seq_tracks/TLX3_H3K4me2_FE.bw',
+            #'tracks/ChiP-seq_tracks/RAG_H3K4me2_FK89_sort.bw',
+            'tracks/ChiP-seq_tracks/TAP_H3K4me2_repl2_FE.bw',
+            #~ # --- H3K9ac
+            'tracks/ChiP-seq_tracks/TAP_H3K9ac_repl2_FE.bw',
+            'tracks/ChiP-seq_tracks/TLX3_H3K9ac_FE.bw',
+            # --- H3K36me3
+            'tracks/ChiP-seq_tracks/TAP_H3K36me3_repl2_FE.bw',
+            'tracks/ChiP-seq_tracks/TLX3_H3K36me3_FE.bw'
             ]
 
 
@@ -118,25 +125,35 @@ grid = ImageGrid(fig, 111, nrows_ncols=(1, len(tracks)), # nrows_ncols=(1, 5),
 
 
 for i,tr in enumerate(tracks):
+    tit = '_'.join(tr.split('/')[-1].split('_')[:2])
     tr_sig = metaseq.genomic_signal(tr,'bigwig')
     arr = tr_sig.array(sm_Nkb, bins=bn, processes=processes)
     if i==0:
+        k = abs(np.max(arr)-np.min(arr))
+        vmin = np.min(arr)
+        vmax = np.max(arr)
+        print tit, vmin, vmax
         i_a = arr.max(axis=1).argsort()
         #i_a = arr.mean(axis=1).argsort()
         arr = arr[i_a,:]
     else:
-        arr = arr[i_a,:]
+        arr = abs(arr[i_a,:])
+        #arr = k*arr[i_a,:]/(abs(np.max(arr)-np.min(arr)))
+        vmin_e = np.min(arr)
+        vmax_e = np.max(arr)
+        print tit, vmin_e, vmax_e
     ax=grid[i]
     fig = metaseq.plotutils.imshow(
             arr,
             x=x, 
             figsize=(4, 10),
             ax=ax,
-            vmin=5, vmax=99,  percentile=True,
+            vmin = int(vmin), vmax=1.1*int(vmax), percentile=False,
+            #vmin=5, vmax=99,  percentile=True,
             line_kwargs=dict(color='k', label='All'),
             fill_kwargs=dict(color='k', alpha=0.3))
             #sort_by=arr.max(axis=1)) # mean(axis=1))
-    tit = '_'.join(tr.split('/')[-1].split('_')[:2])
+    
     ax.set_title(tit)
     if i==0:
         ax.set_ylabel('trajectory '+trj+' ('+str(len(reg_dt))+')')
