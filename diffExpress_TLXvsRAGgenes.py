@@ -186,12 +186,16 @@ tbn['Gene_name']=tbn.index
 
 tb_u = pd.concat([tbn['Gene_name'],tbn.iloc[:,:len(classes)]], axis=1)
 
+
+#tbn = tbn.reset_index(drop=True)
+
 #~ tbn['Gene_name']=tbn['Gene_name'].str.upper()
 
 #~ tbn.set_index('Gene_name', drop=False, inplace=True)
 
 #~ tb_u = tbn.drop(['padj'],axis=1)
 
+#gs_res = gp.gsea.call(data=tbn,gene_sets = g_set, outdir='_test')
 
 
 
