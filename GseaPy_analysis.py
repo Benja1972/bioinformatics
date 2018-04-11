@@ -55,17 +55,24 @@ gs_dic = {  'Hallmark': 'tracks/GSEA_gene_sets/h.all.v6.0.symbols.gmt',
             'Oncogenic_signatures': 'MSigDB_Oncogenic_Signatures',
             'Computational':'MSigDB_Computational',
             'NCI-60_Cancer_Cell_Lines': 'NCI-60_Cancer_Cell_Lines',
-            'Transcription_factor_targets': 'tracks/GSEA_gene_sets/c3.tft.v6.0.symbols.gmt'}
+            'Transcription_factor_targets': 'tracks/GSEA_gene_sets/c3.tft.v6.0.symbols.gmt',
+            'IMMPort': 'gene_lists/IMMPort/IMMPort_test.gmt'}
 
 
 
 
 #~ for g_set in gs_dic.keys():
-for g_set in ['Transcription_factor_targets']:
-    out_dir = 'GSEA/TLX3vsRAG_' + g_set
+for g_set in ['IMMPort']:
+    out_dir = 'GSEA/TLX3vsRAG_' + g_set + 'classic'
 
     gs_res = gp.gsea(data=tbn, 
-                    gene_sets = gs_dic[g_set], 
+                    gene_sets = gs_dic[g_set],
+                    weighted_score_type = 0,
+                    #~ method = 'ratio_of_classes', 
+                    min_size = 10,
+                    max_size = 5000,
+                    graph_num = 50,
+                    permutation_type = 'gene_set',
                     outdir=out_dir, 
                     cls = classes)
     
