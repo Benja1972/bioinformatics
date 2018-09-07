@@ -3,6 +3,10 @@ for f in *.eps; do epstopdf "$f"; done
 pdftk *.pdf output TLX3-TAP-FE_states7_21.pdf
 
 ----------------------------------------------------------------------------------
+# Enrichment by ChromHMM
+ChromHMM.sh -Xmx4096M OverlapEnrichment TAP_6_FE_segments.bed enrichment TAP_enrichment > log 2>&1
+
+---------------------------------------------------------------------------------
 # GFF to BED
 gff2bed < fimo.gff > RUNX_motif.bed
 
@@ -23,6 +27,10 @@ awk '($4=="E7")' file_segments.bed > file_E7_segments.bed
 # for two states with OR
 awk '($4=="E13" || $4=="E14")' file_segments.bed > file_E13E14_segments.bed
 
+
+___________________________________________________________________
+## LifOver
+liftOver RP_mm10.bed mm10ToMm9.over.chain.gz RP_mm9.bed unmapped
 
 
 __________________________________________

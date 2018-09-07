@@ -20,13 +20,18 @@ names = pd.read_table("tracks/annot_tracks/references/mm9/mm9_EnsemblTransc_Gene
                            header=0,
                            names=['GeneID', 'TransID', 'Gene_name'])
 
-names = names.drop('TransID', axis=1).drop_duplicates()
-names = names.reindex(tbl.index)
+names = names[~names.index.duplicated(keep='first')]
+names = names.drop('TransID', axis=1)
+#names = names.reindex(tbl.index)
+names = names.loc[tbl.index]
+
 
 
 cols = ['TLX3.1_1', 'TLX3.1_5', 'TLX3.1_P', 'R2.RAG1W.RAG1', 'RAGS.RAGZ', 'RAGZ']
 classes = ['TLX3','TLX3','TLX3', 'RAG','RAG','RAG']
 
+
+assert names.index.all() == tbl.index.all()
 tbn = pd.concat([names,tbl[cols]], axis=1)
 
 #tbn = tbn.drop(['baseMean', 'log2FoldChange', 'lfcSE', 'stat',  'pvalue',  'padj'], axis=1)
@@ -56,22 +61,25 @@ gs_dic = {  'Hallmark': 'tracks/GSEA_gene_sets/h.all.v6.0.symbols.gmt',
             'Computational':'MSigDB_Computational',
             'NCI-60_Cancer_Cell_Lines': 'NCI-60_Cancer_Cell_Lines',
             'Transcription_factor_targets': 'tracks/GSEA_gene_sets/c3.tft.v6.0.symbols.gmt',
-            'IMMPort': 'gene_lists/IMMPort/IMMPort_test.gmt'}
+            'IMMPort': 'gene_lists/IMMPort/IMMPort_test.gmt',
+            'Pierre_sets': 'tracks/GSEA_gene_sets/Pierre_gene_sets.gmt',
+            'Pierre_sets_TLX_enh_TSS': 'tracks/GSEA_gene_sets/Pierre_gene_sets_plus.gmt',
+            'Pierre_sets_v2': 'tracks/GSEA_gene_sets/Pierre_gene_sets_v2.gmt'} 
 
 
 
 
 #~ for g_set in gs_dic.keys():
-for g_set in ['IMMPort']:
-    out_dir = 'GSEA/TLX3vsRAG_' + g_set + 'classic'
+for g_set in ['Pierre_sets_v2']:
+    out_dir = 'GSEA/TLX3vsRAG_' + g_set + '_classic_std'
 
     gs_res = gp.gsea(data=tbn, 
                     gene_sets = gs_dic[g_set],
                     weighted_score_type = 0,
                     #~ method = 'ratio_of_classes', 
                     min_size = 10,
-                    max_size = 5000,
-                    graph_num = 50,
+                    max_size = 10000,
+                    graph_num = 150,
                     permutation_type = 'gene_set',
                     outdir=out_dir, 
                     cls = classes)

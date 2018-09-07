@@ -9,9 +9,11 @@ import itertools
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import scipy.stats as st
 
 # comment metaseq for Python3 (works only express)
-#from metaseq.results_table import ResultsTable
+if sys.version_info[0] < 3:
+    from metaseq.results_table import ResultsTable
 
 # RNA expression examples from gseapy package
 # classes shoud be like this
@@ -31,6 +33,15 @@ def write_gmt(st, name, path=''):
     gmt = [name, name] + list(st)
     with open(join(path,name+'.gmt'), 'w') as fp:
         fp.write("\t".join(gmt))
+
+# == Write gene set dic to gmt format
+def write_dic2gmt(dic, name, path=''):
+    with open(join(path,name+'.gmt'), 'w') as fp:
+        for db, term in dic.items():
+            gmt = [db, db] + list(term)
+            fp.write("\t".join(gmt))
+            fp.write("\n")
+
 
 # == Load gene set in gmt format
 def read_gmt(name, path=''):
@@ -52,6 +63,90 @@ def write_df2bed(df,name, path='' ):
                                         sep='\t', 
                                         index=False,
                                         header=False)
+
+## == Enrichment analysis P-values
+def pValue(tot, num_a, num_b, num_ab):
+    # tot:    total number of genes 
+    # num_a:  total number of genes in the list with condition A
+    # num_b:  total number of genes in the list with condition B
+    # num_ab: number of genes with both condition A and B
+    
+    # p_val_minus = st.hypergeom.cdf(int(num_ab),int(tot),int(num_a),int(num_b))
+    # p_val_plus  = st.hypergeom.sf(int(num_ab) - 1,int(tot),int(num_a),int(num_b)
+
+    #~ a p-value where by random chance number of genes with both condition A and B will be <= to your number with condition A and B
+    #~ a p-value where by random chance number of genes with both condition A and B will be >= to your number with condition A and B
+    #~ The second p-value is probably what you want
+    
+    return st.hypergeom.sf(int(num_ab) - 1,int(tot),int(num_a),int(num_b))
+
+
+
+def p_value(df, A, B, classes):
+    df = df.copy()
+    la = classes.count(A)
+    lb = classes.count(B)
+    df_mean = df.groupby(by=classes, axis=1).mean()
+    df_var = df.groupby(by=classes, axis=1).var(ddof=1)
+    t = (df_mean[A] - df_mean[B])/ np.sqrt(df_var[A]/la+df_var[B]/lb)
+    dgf = la+lb - 2
+    pval =  2*st.t.cdf(-abs(t),df=dgf)
+    return pval
+
+
+
+def p_adjust(pvalue, method="fdr"):
+    p = pvalue
+    n = len(p)
+    p0 = np.copy(p, order='K')
+    nna = np.isnan(p)
+    p = p[~nna]
+    lp = len(p)
+    if method == "bonferroni":
+        p0[~nna] = np.fmin(1, lp * p)
+    elif method == "fdr":
+        i = np.arange(lp, 0, -1)
+        o = (np.argsort(p))[::-1]
+        ro = np.argsort(o)
+        p0[~nna] = np.fmin(1, np.minimum.accumulate((p[o]/i*lp)))[ro]
+    else:
+        print("Method is not implemented")
+        p0 = None
+    return p0
+
+
+
+
+
+
+def barplot(df, cutoff=0.05, figsize=(6.5,6), top_term=10, ttl=""):
+    """ barplot for enrichr results"""
+
+    # pvalue cut off
+    d = df[df['Adjusted P-value'] <= cutoff]
+
+    if len(d) < 1:
+        return None
+    d = d.assign(logAP = - np.log10(d.loc[:,'Adjusted P-value']).values )
+    d = d.sort_values('logAP', ascending=False)
+    dd = d.head(top_term).sort_values('logAP', ascending=False)
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(111)
+    sns.barplot(y='Term', x='logAP', color="Red", ax=ax, data = dd)
+    ax.set_xlabel("-log$_{10}$ Adjust P-value")
+    #ax.set_ylabel("")
+    ax.set_title(ttl)
+    ax.legend(loc=4)
+    #~ bar = dd.plot.barh(x='Term', y='logAP', color="salmon", alpha=0.75, fontsize=14, ax=ax)
+    #~ bar.set_xlabel("-log$_{10}$ Adjust P-value", fontsize=14)
+    #~ bar.set_ylabel("")
+    #~ bar.set_title(ttl,fontsize=20)
+    #~ bar.legend(loc=4)
+    # fig.savefig(png, bbox_inches='tight')
+    # fig.savefig(pdf, bbox_inches='tight')
+    return fig
+
+
 
 
 def preprocess(df):
@@ -170,7 +265,81 @@ def updn(df, phenoPos, phenoNeg, classes, geneList=[]):
 
 
 
-def express(df, phenoPos, phenoNeg, classes, n_top=0, geneList=[],  ttl=''):
+def express(df, phenoPos, phenoNeg, classes, n_top=0, geneList=[],  ttl='', sort=True, diffr=True):
+    # ---
+    A = phenoPos
+    B = phenoNeg
+    
+    df = df.dropna()
+    df = df.iloc[:,:len(classes)+1]
+
+
+    df.set_index(keys=df.columns[0], inplace=True)
+    df.index=df.index.str.upper()
+    df2 = df.T
+    df2['class'] = classes
+    df_mean= df2.groupby('class').mean().T
+    df_std = df2.groupby('class').std().T
+
+    dfm = pd.concat([df,df_mean], axis=1)
+    dfm['lgFC'] = np.log2((df_mean[A]+1.) / (df_mean[B]+1.))
+    
+    if not geneList:
+        geneList = list(dfm.index)
+    
+    gs = dfm.iloc[dfm.index.isin(geneList)]
+    gs = gs.reindex(geneList)
+    gs['FCmod'] = abs(gs['lgFC'])
+    
+    up = gs[gs.lgFC > 1.].sort_values('lgFC', axis=0, ascending=False)
+    dn = gs[gs.lgFC < -1.].sort_values('lgFC', axis=0, ascending=False)
+    #diff = gs[abs(gs.lgFC) > 1.]
+    
+    
+    up_l = len(up)
+    dn_l = len(dn)
+    tt_l = len(gs)
+    
+    #print tt_l, len(geneList)
+    if diffr:
+        #top = diff.copy()
+        top = pd.concat([up[:n_top],dn[-n_top:]], axis=0)
+    else:
+        top = gs.copy()
+        if sort:
+            top = top.sort_values('FCmod', axis=0, ascending=False)
+            #top = top.sort_values('lgFC', axis=0, ascending=False)
+
+        if n_top==0:
+            n_top=len(gs)
+
+        top = top[:n_top]
+        #top = top.sort_values(A, axis=0, ascending=False)
+        #top = top.sort_values('lgFC', axis=0, ascending=False)
+
+
+
+        
+
+    
+    fig = plt.figure(figsize=(6, max(11,int(n_top/9.)))) #11
+    ax = fig.add_subplot(111)
+    sns.heatmap(log2p1(top.iloc[:,:len(classes)]), 
+                cmap='RdBu_r',  
+                linewidths=0.004)
+    ax.set_title('Top different')
+    for txt in ax.get_yticklabels():
+            txt.set_rotation(0)
+    for txt in ax.get_xticklabels():
+            txt.set_rotation(90)
+    
+    fig.suptitle(ttl, size='x-large')
+    
+    return top, up, dn, gs
+
+
+
+def cluster_express(df, phenoPos, phenoNeg, classes, n_top=0, geneList=[],  ttl=''):
     # ---
     A = phenoPos
     B = phenoNeg
@@ -196,42 +365,43 @@ def express(df, phenoPos, phenoNeg, classes, n_top=0, geneList=[],  ttl=''):
     
     up = gs[gs.lgFC > 1.]
     dn = gs[gs.lgFC < -1.]
+    gs = pd.concat([up,dn])
     
     
     up_l = len(up)
     dn_l = len(dn)
     tt_l = len(gs)
     
-    #print tt_l, len(geneList) 
     
     gs['FCmod'] = abs(gs['lgFC'])
-    #top = gs.copy()
     top = gs.sort_values('FCmod', axis=0, ascending=False)
-    if n_top==0:
-        n_top=len(gs)
-        top = top[:n_top]
-    else:
-        top = top[:n_top].sort_values(A, axis=0, ascending=False)
+    if n_top != 0:
+        ntp = min(2*n_top,len(gs))
+        top = top.head(ntp)
 
+
+    dpic  = log2p1(top.iloc[:,:len(classes)])
     
-    fig = plt.figure(figsize=(6, max(11,int(n_top/9.)))) #11
-    ax = fig.add_subplot(111)
-    sns.heatmap(log2p1(top.iloc[:,:len(classes)]), 
-                cmap='RdBu_r',  
-                linewidths=0.004)
-    ax.set_title('diffExpressed')
-    for txt in ax.get_yticklabels():
-            txt.set_rotation(0)
-    for txt in ax.get_xticklabels():
+    # --Cluster
+    grid = sns.clustermap(dpic, cmap='RdBu_r', 
+                        linewidths=0.004,
+                        #metric='cosine',
+                        #method='complete',
+                        #z_score= 1,# 0 - row, 1 - column
+                        col_cluster=False,
+                        figsize=(8, max(11,int(n_top/9.))))
+    for txt in grid.ax_heatmap.get_yticklabels():
+        txt.set_rotation(0)
+    for txt in grid.ax_heatmap.get_xticklabels():
             txt.set_rotation(90)
-    
-    fig.suptitle(ttl, size='x-large')
+    grid.ax_heatmap.set_title(ttl+ ' diffExpressed' )
+    # -----------
     
     return top, up, dn, gs
 
 
 
-def scatter(df, phenoPos, phenoNeg, classes, n_top, geneList=[],  ttl=''):
+def scatter(df, phenoPos, phenoNeg, classes, n_top=0, geneList=[],  ttl='', names_term=' Genes'):
     # ---
     A = phenoPos
     B = phenoNeg
@@ -249,7 +419,8 @@ def scatter(df, phenoPos, phenoNeg, classes, n_top, geneList=[],  ttl=''):
 
     dfm = pd.concat([df,df_mean], axis=1)
     dfm['lgFC'] = np.log2((df_mean[A]+1.) / (df_mean[B]+1.))
-    
+    print(dfm.head())
+    print(df_mean.head())
     if not geneList:
         geneList = list(dfm.index)
     
@@ -344,7 +515,7 @@ def scatter(df, phenoPos, phenoNeg, classes, n_top, geneList=[],  ttl=''):
               borderpad=0.1,
               handletextpad=0.05,
               frameon=False,
-              title=' Genes',
+              title=names_term,
               );
 
     # Adjust the legend title after it's created
@@ -445,6 +616,178 @@ def volcano(df, phenoPos, phenoNeg, classes, n_top, geneList=[],  ttl=''):
 
     ax.set_title(ttl)
 
+def scatter_n(df, A, B, classes, n_top=0, geneList=[], ttl=''):
+    df = df.copy()
+    df_mean= df.groupby(by=classes, axis=1).mean()
 
+
+    df = pd.concat([df,df_mean], axis=1)
+    df['lgFC'] = np.log2((df_mean[A]+1.) / (df_mean[B]+1.))
+    
+    df.index=df.index.str.upper()
+    if not geneList:
+        geneList = list(df.index)
+    
+    gs = df.iloc[df.index.isin(geneList)]
+
+    gs = gs.sort_values('lgFC', 
+                        axis=0, 
+                        ascending=False)
+    
+    up = gs[gs.lgFC > 1.]
+    dn = gs[gs.lgFC < -1.]
+    
+    up_l = len(up)
+    dn_l = len(dn)
+    tt_l = len(gs)
+    
+    gs['lg'+A] = log2p1(gs[A])
+    gs['lg'+B] = log2p1(gs[B])
+
+
+    diff = "diff_"+A+"_vs_"+B
+
+    gs[diff]='unchng'
+    gs.loc[gs["lgFC"]>1,diff]='up'
+    gs.loc[gs["lgFC"]<-1,diff]='down'
+
+    cpp = [(0.86, 0.23, 0.22), (0.5,0.5,0.5),(0.03, 0.45, 0.56)]
+    f, ax = plt.subplots(figsize=(6.5, 6.5))
+    sns.scatterplot(x = 'lg'+B, 
+                    y = 'lg'+A, 
+                    hue=diff, 
+                    data=gs, 
+                    ax=ax, 
+                    palette=cpp, 
+                    linewidth=0, 
+                    s=3.4)
+    ax.set_xlabel(B +', log2(FPKM + 1)')
+    ax.set_ylabel(A +', log2(FPKM + 1)')
+    ax.set_title(A+'/'+B+' '+ttl)
+    ax.axis('equal')
+    ax.axis('tight')
+    
+    # ==== Plot text of top genes
+    for i in range(n_top):
+        rx = .0003*np.random.randn()
+        ry = .0003*np.random.randn()
+        #~ print gss.index[i]
+        ax.text(log2p1(gs[B][i]*(1.+rx)),
+                log2p1(gs[A][i]*(1.+ry)),
+                gs.index[i], 
+                color=cpp[0])
+        ax.text(log2p1(gs[B][-i-1]*(1.+rx)),
+                log2p1(gs[A][-i-1]*(1.+ry)),
+                gs.index[-i-1], 
+                color=cpp[2])
+                
+    ax.text(0.37,0.95, 'UP: '+str(up_l),
+            color=cpp[0],
+            transform=ax.transAxes)
+    ax.text(0.55,0.95, 'DOWN: '+str(dn_l),
+            color=cpp[2],
+            transform=ax.transAxes)
+    ax.text(0.82,0.95, 'ALL: '+str(tt_l),
+            transform=ax.transAxes)
+    
+    return up, dn, ax
+
+
+def volcano_n(df, A, B, classes, n_top=0, geneList=[], ttl=''):
+    df = df.copy()
+    df_mean= df.groupby(by=classes, axis=1).mean()
+    df['p-val'] = p_value(df, A, B, classes)
+    df['p-adj'] = p_adjust(df['p-val'])
+    df['lgFC'] = np.log2((df_mean[A]+1.) / (df_mean[B]+1.))
+
+    pv = 'p-adj'#'p-val'
+    df['nlog10_pV'] = -np.log10(df[pv])
+    
+    df.index=df.index.str.upper()
+    if not geneList:
+        geneList = list(df.index)
+    
+    gs = df.iloc[df.index.isin(geneList)]
+    gs = gs.sort_values('lgFC', 
+                        axis=0, 
+                        ascending=False)
+    
+    up = gs[gs.lgFC > 1.]
+    dn = gs[gs.lgFC < -1.]
+    
+    up_l = len(up)
+    dn_l = len(dn)
+    tt_l = len(gs)
+    
+
+    diff = "diff_"+A+"_vs_"+B
+
+    gs[diff]='unchng'
+    gs.loc[gs["lgFC"]>1,diff]='up'
+    gs.loc[gs["lgFC"]<-1,diff]='down'
+
+    cpp = [(0.86, 0.23, 0.22), (0.5,0.5,0.5),(0.03, 0.45, 0.56)]
+    f, ax = plt.subplots(figsize=(6.5, 6.5))
+    sns.scatterplot(x = 'lgFC', 
+                    y = 'nlog10_pV', 
+                    hue=diff, 
+                    data=gs, 
+                    ax=ax, 
+                    palette=cpp, 
+                    linewidth=0, 
+                    s=3.4)
+    ax.set_xlabel('log FC')
+    ax.set_ylabel('-log10($p_{val}$)')
+    ax.set_title(A+'/'+B+' '+ttl)
+    ax.axis('equal')
+    ax.axis('tight')
+    
+    # ==== Plot text of top genes
+    for i in range(n_top):
+        rx = .0003*np.random.randn()
+        ax.text(gs['lgFC'][i]*(1.+rx),
+                gs['nlog10_pV'][i]+1e-300,
+                gs.index[i], 
+                color=cpp[0])
+        ax.text(gs['lgFC'][-i-1]*(1.+rx),
+                gs['nlog10_pV'][-i-1]+1e-300,
+                gs.index[-i-1], 
+                color=cpp[2])
+                
+    ax.text(0.037,0.95, 'UP: '+str(up_l),
+            color=cpp[0],
+            transform=ax.transAxes)
+    ax.text(0.25,0.95, 'DOWN: '+str(dn_l),
+            color=cpp[2],
+            transform=ax.transAxes)
+    ax.text(0.52,0.95, 'ALL: '+str(tt_l),
+            transform=ax.transAxes)
+    
+    return up, dn, ax
+
+
+def cluster(df, A, B, classes, n_top=0):
+    df = df.copy()
+    cols = df.columns
+    df_mean= df.groupby(by=classes, axis=1).mean()
+
+    df['lgFC'] = np.log2((df_mean[A]+1.) / (df_mean[B]+1.))
+    
+    df = df[abs(df['lgFC'])>1].sort_values('lgFC', axis=0, ascending=False)
+    
+    if n_top == 0:
+        n_top = len(df)
+    df = pd.concat([df.head(int(n_top/2)),df.tail(int(n_top/2))], axis=0)
+    
+    # --Cluster
+    dpic  = log2p1(df[cols])
+    grid = sns.clustermap(dpic, cmap='RdBu_r', 
+                        linewidths=0.004,
+                        #metric='correlation',
+                        method='centroid',
+                        col_cluster=False,
+                        figsize=(8, int(n_top/2)))
+    return grid
+    # -----------
 
 ## END ====

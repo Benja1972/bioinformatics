@@ -19,8 +19,8 @@ def write_gmt(st, name, path=''):
     with open(join(path,name+'.gmt'), 'w') as fp:
         fp.write("\t".join(gmt))
 
-
-
+# Save or not
+SV = False
 
 ## === Bed manipulation ======================
 ## ===========================================
@@ -65,11 +65,12 @@ tss_notin_enh = tss - enh
 enh_notin_tss = enh - tss
 diff_enh_tss = enh ^ tss
 
-write_gmt(tss_and_enh,   'tss_and_enh',  'gene_lists/tlx_enh_tss3k')
-write_gmt(tss_or_enh,    'tss_or_enh',   'gene_lists/tlx_enh_tss3k')
-write_gmt(tss_notin_enh, 'tss_notin_enh','gene_lists/tlx_enh_tss3k')
-write_gmt(enh_notin_tss, 'enh_notin_tss','gene_lists/tlx_enh_tss3k')
-write_gmt(diff_enh_tss,  'diff_enh_tss', 'gene_lists/tlx_enh_tss3k')
+if SV:
+    write_gmt(tss_and_enh,   'tss_and_enh',  'gene_lists/tlx_enh_tss3k')
+    write_gmt(tss_or_enh,    'tss_or_enh',   'gene_lists/tlx_enh_tss3k')
+    write_gmt(tss_notin_enh, 'tss_notin_enh','gene_lists/tlx_enh_tss3k')
+    write_gmt(enh_notin_tss, 'enh_notin_tss','gene_lists/tlx_enh_tss3k')
+    write_gmt(diff_enh_tss,  'diff_enh_tss', 'gene_lists/tlx_enh_tss3k')
 
 # === Load expression table 
 tbl = pd.read_table(join('tracks', 'TLX3vsRAGvsTAP_DESeq2-results.txt'), index_col=0)
@@ -93,21 +94,31 @@ tbl=names.join(tbl, how ='right')
 ## === Expresion analysis
 import RNA_expression_processing as rn
 
-rn.rna_scatter(tbl, list(tss_and_enh), 5, 'TSS and Enh')
-rn.rna_expression(tbl, list(tss_and_enh), 30, 'TSS and Enh')
+tbn = tbl[['Gene_name', 'R2.RAG1W.RAG1','RAGS.RAGZ','RAGZ','TLX3.1_1','TLX3.1_5','TLX3.1_P', 'padj']]
 
-rn.rna_scatter(tbl, list(tss_notin_enh), 5, 'Only TSS')
-rn.rna_expression(tbl, list(tss_notin_enh), 30, 'Only TSS')
+classes = ['RAG','RAG','RAG','TLX3','TLX3','TLX3']
 
-rn.rna_scatter(tbl, list(tss_or_enh), 5, 'ALL:  TSS or Enh')
-rn.rna_expression(tbl, list(tss_or_enh), 30, 'ALL:  TSS or Enh')
+groups ={
+    'TSS and Enh':tss_and_enh,
+    'Only TSS':tss_notin_enh,
+    'ALL:  TSS or Enh':tss_or_enh,
+    'Only Enh':enh_notin_tss,
+    'In Enh or TSS but not common':diff_enh_tss
+}
 
-rn.rna_scatter(tbl, list(enh_notin_tss), 5,  'Only Enh')
-rn.rna_expression(tbl, list(enh_notin_tss), 30,  'Only Enh')
+if SV:
+    rn.write_dic2gmt(groups, 
+                     name='TLX3pk_Enh_TSS2Kb', 
+                     path='gene_lists/tlx_enh_tss3k')
 
 
-rn.rna_scatter(tbl, list(diff_enh_tss), 5,  'In Enh ot TSS but not common')
-rn.rna_expression(tbl, list(diff_enh_tss), 30,  'In Enh ot TSS but not common')
+for nm, gns in groups.iteritems():
+    gl = list(gns)
+    rn.scatter(tbn,'TLX3', 'RAG', classes=classes, 
+                n_top=5, geneList=gl, ttl=nm)
+    rn.express(tbn,'TLX3', 'RAG', classes=classes, 
+                n_top=30,  geneList=gl, ttl=nm) 
+
 
 plt.show()
 
