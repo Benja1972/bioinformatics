@@ -115,51 +115,20 @@ tbv = tbn.set_index(keys=tbn.columns[0])
 tbv.index=tbv.index.str.upper()
 
 ### == UP analysis
-
 gl_up = list(up.index)
-
-
-#~ topN, upN, dnN, gsN = rn.express(tbn, 'TLX3', 'RAG', 
-                                #~ classes=classes, 
-                                #~ geneList=gl_up,  
-                                #~ ttl='ALL genes',
-                                #~ n_top=ntop,
-                                #~ sort=False, 
-                                #~ #diffr=False
-                                #~ )
-
-#~ rn.volcano_n(tbv, 'TLX3', 'RAG', 
-                #~ classes=classes, 
-                #~ n_top=int(ntop/2), 
-                #~ geneList=gl_up)
 tbu = tbv.iloc[tbv.index.isin(gl_up)]
 
+# -- Scatter
 rn.scatter_n(tbu, A, B, 
                 classes=classes, 
                 n_top=4) 
-                #~ geneList=gl_up)
-
 
 if SAVE:
     plt.savefig(pp, format='pdf')
 
-
-#~ rn.cluster_express(tbn, A, B, 
-                    #~ classes=classes, 
-                    #~ geneList=gl_up,  
-                    #~ ttl='UP-RP genes',
-                    #~ n_top=ntop)
-
-
-
-
+# -- Cluster
 gr = rn.cluster(tbu, A, B, classes, n_top=2*ntop)
-
 gr.ax_heatmap.set_title('Cluster UP_RP'+A+'/'+B)
-""" The returned object has a 'savefig' method that should be used if you want to save the figure object without clipping the dendrograms.
-To access the reordered row indices, use: 'clustergrid.dendrogram_row.reordered_ind'
-Column indices, use: 'clustergrid.dendrogram_col.reordered_ind'
-"""
 
 if SAVE:
     plt.savefig(pp, format='pdf')
