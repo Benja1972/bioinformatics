@@ -616,47 +616,30 @@ def volcano(df, phenoPos, phenoNeg, classes, n_top, geneList=[],  ttl=''):
 
     ax.set_title(ttl)
 
-def scatter_n(df, A, B, classes, n_top=0, geneList=[], ttl=''):
+def scatter_n(df, A, B, classes, n_top=0, ttl=''):
     df = df.copy()
     df_mean= df.groupby(by=classes, axis=1).mean()
 
-
-    df = pd.concat([df,df_mean], axis=1)
     df['lgFC'] = np.log2((df_mean[A]+1.) / (df_mean[B]+1.))
+    df['lg'+A] = np.log2(df_mean[A]+1)
+    df['lg'+B] = np.log2(df_mean[B]+1)
+    df = df.sort_values('lgFC', axis=0, ascending=False)
     
-    df.index=df.index.str.upper()
-    if not geneList:
-        geneList = list(df.index)
+    up = df[df.lgFC > 1.]
+    dn = df[df.lgFC < -1.]
     
-    gs = df.iloc[df.index.isin(geneList)]
+    diff = A+"_vs_"+B
 
-    gs = gs.sort_values('lgFC', 
-                        axis=0, 
-                        ascending=False)
-    
-    up = gs[gs.lgFC > 1.]
-    dn = gs[gs.lgFC < -1.]
-    
-    up_l = len(up)
-    dn_l = len(dn)
-    tt_l = len(gs)
-    
-    gs['lg'+A] = log2p1(gs[A])
-    gs['lg'+B] = log2p1(gs[B])
-
-
-    diff = "diff_"+A+"_vs_"+B
-
-    gs[diff]='unchng'
-    gs.loc[gs["lgFC"]>1,diff]='up'
-    gs.loc[gs["lgFC"]<-1,diff]='down'
+    df[diff]='unchanged'
+    df.loc[df["lgFC"]>1,diff]='up'
+    df.loc[df["lgFC"]<-1,diff]='down'
 
     cpp = [(0.86, 0.23, 0.22), (0.5,0.5,0.5),(0.03, 0.45, 0.56)]
     f, ax = plt.subplots(figsize=(6.5, 6.5))
     sns.scatterplot(x = 'lg'+B, 
                     y = 'lg'+A, 
                     hue=diff, 
-                    data=gs, 
+                    data=df, 
                     ax=ax, 
                     palette=cpp, 
                     linewidth=0, 
@@ -669,25 +652,24 @@ def scatter_n(df, A, B, classes, n_top=0, geneList=[], ttl=''):
     
     # ==== Plot text of top genes
     for i in range(n_top):
-        rx = .0003*np.random.randn()
-        ry = .0003*np.random.randn()
-        #~ print gss.index[i]
-        ax.text(log2p1(gs[B][i]*(1.+rx)),
-                log2p1(gs[A][i]*(1.+ry)),
-                gs.index[i], 
+        rx = np.log2(1+.0003*np.random.randn())
+        ry = np.log2(1+.0003*np.random.randn())
+        ax.text(df['lg'+B][i]+rx,
+                df['lg'+A][i]+ry,
+                df.index[i], 
                 color=cpp[0])
-        ax.text(log2p1(gs[B][-i-1]*(1.+rx)),
-                log2p1(gs[A][-i-1]*(1.+ry)),
-                gs.index[-i-1], 
+        ax.text(df['lg'+B][-i-1]+rx,
+                df['lg'+A][-i-1]+ry,
+                df.index[i], 
                 color=cpp[2])
                 
-    ax.text(0.37,0.95, 'UP: '+str(up_l),
+    ax.text(0.37,0.95, 'UP: '+str(len(up)),
             color=cpp[0],
             transform=ax.transAxes)
-    ax.text(0.55,0.95, 'DOWN: '+str(dn_l),
+    ax.text(0.55,0.95, 'DOWN: '+str(len(dn)),
             color=cpp[2],
             transform=ax.transAxes)
-    ax.text(0.82,0.95, 'ALL: '+str(tt_l),
+    ax.text(0.82,0.95, 'ALL: '+str(len(df)),
             transform=ax.transAxes)
     
     return up, dn, ax

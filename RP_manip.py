@@ -61,8 +61,7 @@ for B in ['RAG_rel_RP']: # ['RAG_rel_RP', 'TAP_rel_RP']:
 
     rn.scatter_n(dfsc, Ac, Bc, 
                 classes=classe, 
-                n_top=4, 
-                geneList=[])
+                n_top=4)
     if SAVE:
         plt.savefig(pp, format='pdf')
     
@@ -113,15 +112,14 @@ cols = ['Gene_name', 'TLX3.1_1','TLX3.1_5','TLX3.1_P','R2.RAG1W.RAG1','RAGS.RAGZ
 tbn = tbl[cols]
 tbv = tbn.set_index(keys=tbn.columns[0])
 tbv.index=tbv.index.str.upper()
+# ---
 
 ### == UP analysis
 gl_up = list(up.index)
 tbu = tbv.iloc[tbv.index.isin(gl_up)]
 
 # -- Scatter
-rn.scatter_n(tbu, A, B, 
-                classes=classes, 
-                n_top=4) 
+rn.scatter_n(tbu, A, B, classes, n_top=4) 
 
 if SAVE:
     plt.savefig(pp, format='pdf')
@@ -132,43 +130,20 @@ gr.ax_heatmap.set_title('Cluster UP_RP'+A+'/'+B)
 
 if SAVE:
     plt.savefig(pp, format='pdf')
-
-### =================
-
-
-
+# ---
 
 ### == DN analysis
-
 gl_dn = list(dn.index)
+tbn = tbv.iloc[tbv.index.isin(gl_dn)]
 
-
-#~ topN, upN, dnN, gsN = rn.express(tbn, 'TLX3', 'RAG', 
-                                #~ classes=classes, 
-                                #~ geneList=gl_dn,  
-                                #~ ttl='ALL genes',
-                                #~ n_top=ntop,
-                                #~ sort=False, 
-                                #~ #diffr=False
-                                #~ )
-
-
-rn.scatter_n(tbv, 'TLX3', 'RAG', 
-                classes=classes, 
-                n_top=4, 
-                geneList=gl_dn)
-
+rn.scatter_n(tbn, A, B, classes, n_top=4) 
 
 if SAVE:
     plt.savefig(pp, format='pdf')
 
-
-#~ rn.cluster_express(tbn, 'TLX3', 'RAG', 
-                    #~ classes=classes, 
-                    #~ geneList=gl_dn,  
-                    #~ ttl='DN-RP genes',
-                    #~ n_top=ntop)
-
+# -- Cluster
+gr = rn.cluster(tbn, A, B, classes, n_top=2*ntop)
+gr.ax_heatmap.set_title('Cluster _RP'+A+'/'+B)
 
 if SAVE:
     plt.savefig(pp, format='pdf')
