@@ -137,13 +137,6 @@ def barplot(df, cutoff=0.05, figsize=(6.5,6), top_term=10, ttl=""):
     #ax.set_ylabel("")
     ax.set_title(ttl)
     ax.legend(loc=4)
-    #~ bar = dd.plot.barh(x='Term', y='logAP', color="salmon", alpha=0.75, fontsize=14, ax=ax)
-    #~ bar.set_xlabel("-log$_{10}$ Adjust P-value", fontsize=14)
-    #~ bar.set_ylabel("")
-    #~ bar.set_title(ttl,fontsize=20)
-    #~ bar.legend(loc=4)
-    # fig.savefig(png, bbox_inches='tight')
-    # fig.savefig(pdf, bbox_inches='tight')
     return fig
 
 
