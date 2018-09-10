@@ -120,10 +120,8 @@ gl_up = list(up.index)
 tbu = tbv.iloc[tbv.index.isin(gl_up)]
 
 # -- Scatter
-rn.scatter_n(tbu, A, B, classes, n_top=4) 
-rn.volcano_n(tbu, A, B, classes, n_top=4) 
-
-df = rn.exp_deg(tbv,A,B, classes)
+rn.scatter_n(tbu, A, B, classes, n_top=3, ttl='UP_RP') 
+rn.volcano_n(tbu, A, B, classes, n_top=3, ttl='UP_RP') 
 
 if SAVE:
     plt.savefig(pp, format='pdf')
@@ -140,7 +138,9 @@ if SAVE:
 gl_dn = list(dn.index)
 tbn = tbv.iloc[tbv.index.isin(gl_dn)]
 
-rn.scatter_n(tbn, A, B, classes, n_top=4) 
+# -- Scatter
+rn.scatter_n(tbn, A, B, classes, n_top=4, ttl='DN_RP') 
+rn.volcano_n(tbn, A, B, classes, n_top=3, ttl='DN_RP')
 
 if SAVE:
     plt.savefig(pp, format='pdf')
