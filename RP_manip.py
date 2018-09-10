@@ -1,5 +1,6 @@
 import numpy as np
 from os.path import join 
+import sys
 import pandas as pd
 import pybedtools as pb
 import gseapy as gp
@@ -120,6 +121,9 @@ tbu = tbv.iloc[tbv.index.isin(gl_up)]
 
 # -- Scatter
 rn.scatter_n(tbu, A, B, classes, n_top=4) 
+rn.volcano_n(tbu, A, B, classes, n_top=4) 
+
+df = rn.exp_deg(tbv,A,B, classes)
 
 if SAVE:
     plt.savefig(pp, format='pdf')
@@ -151,8 +155,8 @@ if SAVE:
 ### =================
 
 
-
-
+plt.show()
+sys.exit(0)
 
 ## === TLX3 peaks analysis =====
 ## ============================= 

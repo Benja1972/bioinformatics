@@ -634,7 +634,7 @@ def scatter_n(df, A, B, classes, n_top=0, ttl=''):
     df.loc[df["lgFC"]>1,diff]='up'
     df.loc[df["lgFC"]<-1,diff]='down'
 
-    cpp = [(0.86, 0.23, 0.22), (0.5,0.5,0.5),(0.03, 0.45, 0.56)]
+    cpp = {'up':(0.86, 0.23, 0.22), 'unchanged':(0.5,0.5,0.5),'down':(0.03, 0.45, 0.56)}
     f, ax = plt.subplots(figsize=(6.5, 6.5))
     sns.scatterplot(x = 'lg'+B, 
                     y = 'lg'+A, 
@@ -657,17 +657,17 @@ def scatter_n(df, A, B, classes, n_top=0, ttl=''):
         ax.text(df['lg'+B][i]+rx,
                 df['lg'+A][i]+ry,
                 df.index[i], 
-                color=cpp[0])
+                color=cpp['up'])
         ax.text(df['lg'+B][-i-1]+rx,
                 df['lg'+A][-i-1]+ry,
                 df.index[i], 
-                color=cpp[2])
+                color=cpp['down'])
                 
     ax.text(0.37,0.95, 'UP: '+str(len(up)),
-            color=cpp[0],
+            color=cpp['up'],
             transform=ax.transAxes)
     ax.text(0.55,0.95, 'DOWN: '+str(len(dn)),
-            color=cpp[2],
+            color=cpp['down'],
             transform=ax.transAxes)
     ax.text(0.82,0.95, 'ALL: '+str(len(df)),
             transform=ax.transAxes)
@@ -675,7 +675,7 @@ def scatter_n(df, A, B, classes, n_top=0, ttl=''):
     return up, dn, ax
 
 
-def volcano_n(df, A, B, classes, n_top=0, geneList=[], ttl=''):
+def volcano_n(df, A, B, classes, n_top=0, ttl=''):
     df = df.copy()
     df_mean= df.groupby(by=classes, axis=1).mean()
     df['p-val'] = p_value(df, A, B, classes)
@@ -683,37 +683,25 @@ def volcano_n(df, A, B, classes, n_top=0, geneList=[], ttl=''):
     df['lgFC'] = np.log2((df_mean[A]+1.) / (df_mean[B]+1.))
 
     pv = 'p-adj'#'p-val'
-    df['nlog10_pV'] = -np.log10(df[pv])
+    df['-log10_pV'] = -np.log10(df[pv])
     
-    df.index=df.index.str.upper()
-    if not geneList:
-        geneList = list(df.index)
+    df = df.sort_values('lgFC', axis=0, ascending=False)
     
-    gs = df.iloc[df.index.isin(geneList)]
-    gs = gs.sort_values('lgFC', 
-                        axis=0, 
-                        ascending=False)
+    up = df[df.lgFC > 1.]
+    dn = df[df.lgFC < -1.]
     
-    up = gs[gs.lgFC > 1.]
-    dn = gs[gs.lgFC < -1.]
-    
-    up_l = len(up)
-    dn_l = len(dn)
-    tt_l = len(gs)
-    
+    diff = A+"_vs_"+B
 
-    diff = "diff_"+A+"_vs_"+B
+    df[diff]='unchanged'
+    df.loc[df["lgFC"]>1,diff]='up'
+    df.loc[df["lgFC"]<-1,diff]='down'
 
-    gs[diff]='unchng'
-    gs.loc[gs["lgFC"]>1,diff]='up'
-    gs.loc[gs["lgFC"]<-1,diff]='down'
-
-    cpp = [(0.86, 0.23, 0.22), (0.5,0.5,0.5),(0.03, 0.45, 0.56)]
+    cpp = {'up':(0.86, 0.23, 0.22), 'unchanged':(0.5,0.5,0.5),'down':(0.03, 0.45, 0.56)}
     f, ax = plt.subplots(figsize=(6.5, 6.5))
     sns.scatterplot(x = 'lgFC', 
-                    y = 'nlog10_pV', 
+                    y = '-log10_pV', 
                     hue=diff, 
-                    data=gs, 
+                    data=df, 
                     ax=ax, 
                     palette=cpp, 
                     linewidth=0, 
@@ -726,23 +714,23 @@ def volcano_n(df, A, B, classes, n_top=0, geneList=[], ttl=''):
     
     # ==== Plot text of top genes
     for i in range(n_top):
-        rx = .0003*np.random.randn()
-        ax.text(gs['lgFC'][i]*(1.+rx),
-                gs['nlog10_pV'][i]+1e-300,
-                gs.index[i], 
-                color=cpp[0])
-        ax.text(gs['lgFC'][-i-1]*(1.+rx),
-                gs['nlog10_pV'][-i-1]+1e-300,
-                gs.index[-i-1], 
-                color=cpp[2])
+        rx = 1+.0003*np.random.randn()
+        ax.text(df['lgFC'][i]*rx,
+                df['-log10_pV'][i]+1e-300,
+                df.index[i], 
+                color=cpp['up'])
+        ax.text(df['lgFC'][-i-1]*rx,
+                df['-log10_pV'][-i-1]+1e-300,
+                df.index[-i-1], 
+                color=cpp['down'])
                 
-    ax.text(0.037,0.95, 'UP: '+str(up_l),
-            color=cpp[0],
+    ax.text(0.037,0.95, 'UP: '+str(len(up)),
+            color=cpp['up'],
             transform=ax.transAxes)
-    ax.text(0.25,0.95, 'DOWN: '+str(dn_l),
-            color=cpp[2],
+    ax.text(0.25,0.95, 'DOWN: '+str(len(dn)),
+            color=cpp['down'],
             transform=ax.transAxes)
-    ax.text(0.52,0.95, 'ALL: '+str(tt_l),
+    ax.text(0.52,0.95, 'ALL: '+str(len(df)),
             transform=ax.transAxes)
     
     return up, dn, ax
@@ -771,5 +759,17 @@ def cluster(df, A, B, classes, n_top=0):
                         figsize=(8, int(n_top/2)))
     return grid
     # -----------
+
+
+
+def exp_deg(df, A, B, classes):
+    df = df.copy()
+    df_mean= df.groupby(by=classes, axis=1).mean()
+    df['p-val'] = p_value(df, A, B, classes)
+    df['p-adj'] = p_adjust(df['p-val'])
+    df['lgFC'] = np.log2((df_mean[A]+1.) / (df_mean[B]+1.))
+    df = df.sort_values('lgFC', axis=0, ascending=False)
+    return df
+
 
 ## END ====
