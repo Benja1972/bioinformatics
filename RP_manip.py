@@ -17,7 +17,7 @@ def log2p1(x):
 
 
 
-SAVE = False
+SAVE = True
 DO = False
 
 DO_GSEA = False
@@ -121,7 +121,7 @@ tbu = tbv.iloc[tbv.index.isin(gl_up)]
 
 # -- Scatter
 rn.scatter_n(tbu, A, B, classes, n_top=3, ttl='UP_RP') 
-rn.volcano_n(tbu, A, B, classes, n_top=3, ttl='UP_RP') 
+#rn.volcano_n(tbu, A, B, classes, n_top=3, ttl='UP_RP') 
 
 if SAVE:
     plt.savefig(pp, format='pdf')
@@ -140,7 +140,7 @@ tbn = tbv.iloc[tbv.index.isin(gl_dn)]
 
 # -- Scatter
 rn.scatter_n(tbn, A, B, classes, n_top=4, ttl='DN_RP') 
-rn.volcano_n(tbn, A, B, classes, n_top=3, ttl='DN_RP')
+#rn.volcano_n(tbn, A, B, classes, n_top=3, ttl='DN_RP')
 
 if SAVE:
     plt.savefig(pp, format='pdf')
@@ -155,8 +155,8 @@ if SAVE:
 ### =================
 
 
-plt.show()
-sys.exit(0)
+#~ plt.show()
+#~ sys.exit(0)
 
 ## === TLX3 peaks analysis =====
 ## ============================= 

@@ -766,3 +766,9 @@ def exp_deg(df, A, B, classes):
 
 
 ## END ====
+
+# And if need remove of duplicated index to unique:
+# df1.index = df1.index + df1.groupby(level=0).cumcount().astype(str).replace('0','')
+
+
+
