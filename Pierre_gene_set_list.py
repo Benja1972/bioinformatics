@@ -71,6 +71,22 @@ def dist_set(set1,set2):
     return dist
 
 
+def dist_kappa(setR, set1,set2):
+    a = len(setR & set1 & set2)
+    b = len((setR & set1) - set2)
+    c = len((setR & set2) - set1)
+    d = len((setR - set1) - set2)
+    t = a + b + c + d
+    p0 = (a + d)/t
+    pY = (a + b)*(a + c)/(t*t)
+    pN = (c + d)*(b + d)/(t*t)
+    pe = pY + pN
+    k = (p0 - pe)/(1 - pe)
+    #dist = 1-len(com)/min(len(set1),len(set2))
+    return k
+
+
+
 path = 'GSEA/TLX3vsRAG_Pierre_sets_v2_classic_std/'
 
 
@@ -108,11 +124,15 @@ for txt in grid.ax_heatmap.get_xticklabels():
 #~ To access the reordered row indices, use: clustergrid.dendrogram_row.reordered_ind
 #~ Column indices, use: clustergrid.dendrogram_col.reordered_ind
 
-llt = list()
-for txt in grid.ax_heatmap.get_yticklabels():
-        llt.append(txt.get_text())
+#~ llt = list()
+#~ for txt in grid.ax_heatmap.get_yticklabels():
+        #~ llt.append(txt.get_text())
 
-llll = grid.dendrogram_row.reordered_ind
+idd = grid.dendrogram_row.reordered_ind
+
+llt = bb.iloc[idd].index
+
+
 
 f, ax = plt.subplots(figsize=(6, 16))
 dfff = df.reindex(llt)
@@ -133,24 +153,6 @@ ax.set_yticklabels(llt)
 #~ plt.show()
 
 
-## Interactions
-#~ import scipy.stats as st
-
-## == Enrichment analysis P-values
-#~ def pValue(tot, num_a, num_b, num_ab):
-    # tot:    total number of genes 
-    # num_a:  total number of genes in the list with condition A
-    # num_b:  total number of genes in the list with condition B
-    # num_ab: number of genes with both condition A and B
-    
-    # p_val_minus = st.hypergeom.cdf(int(num_ab),int(tot),int(num_a),int(num_b))
-    # p_val_plus  = st.hypergeom.sf(int(num_ab) - 1,int(tot),int(num_a),int(num_b)
-
-    #~ a p-value where by random chance number of genes with both condition A and B will be <= to your number with condition A and B
-    #~ a p-value where by random chance number of genes with both condition A and B will be >= to your number with condition A and B
-    #~ The second p-value is probably what you want
-    
-    #~ return st.hypergeom.sf(int(num_ab) - 1,int(tot),int(num_a),int(num_b))
 
 
 import RNA_expression_processing as rn
@@ -181,15 +183,16 @@ for ter2 in terms:
         #~ print(term_t +' and '+ ter2+' = '+str(len(list(com))))
 
 
-print(inter[['genes_num', 'p-value']].head(20))
+#~ print(inter[['genes_num', 'p-value']].head(20))
 
 if SAVE:
      inter.sort_values('p-value', ascending=True).to_csv(path+'Tlx3_pk_and_Gene_sets.csv')
 
-
-inter =inter.sort_values('p-value', ascending=True).reset_index()
-inter.head(40).plot.barh(y='p-value',x='index', figsize=(18, 6), fontsize=10)
-plt.gca().invert_yaxis()
+inter['p-value'] = inter['p-value'].astype(float)
+inter['-log10_pVal'] = -np.log10(inter['p-value'])
+inter =inter.sort_values('-log10_pVal', ascending=True).reset_index()
+inter.head(40).plot.barh(y='-log10_pVal',x='index', figsize=(18, 6), fontsize=10)
+#plt.gca().invert_yaxis()
 plt.title(term_t)
 
 

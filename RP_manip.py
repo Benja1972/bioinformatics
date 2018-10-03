@@ -22,7 +22,7 @@ DO = False
 
 DO_GSEA = False
 
-ntop=30
+ntop=40
 
 
 # === Load file
@@ -31,6 +31,8 @@ ntop=30
 prfx = 'bam_input/'
 
 path = 'tracks/MARGE/relativeRP/'
+
+path_out = 'tracks/MARGE/relativeRP/result/'
 
 path_tb = join(path,prfx)
 
@@ -46,7 +48,7 @@ dfs.drop_duplicates(subset='gene_name', inplace=True)
 A = 'TLX_rel_RP'
 if SAVE:
     from matplotlib.backends.backend_pdf import PdfPages
-    pp = PdfPages(path+'RegPoten_TLX3_vs_RAG_analysis.pdf')
+    pp = PdfPages(path_out+'RegPoten_TLX3_vs_RAG_analysis.pdf')
 
 for B in ['RAG_rel_RP']: # ['RAG_rel_RP', 'TAP_rel_RP']:
 
@@ -60,23 +62,27 @@ for B in ['RAG_rel_RP']: # ['RAG_rel_RP', 'TAP_rel_RP']:
     Bc = B+'c'
     classe = [A+'c', B+'c']
 
-    rn.scatter_n(dfsc, Ac, Bc, 
+    up, dn, ax = rn.scatter_n(dfsc, Ac, Bc, 
                 classes=classe, 
                 n_top=4)
+    
     if SAVE:
         plt.savefig(pp, format='pdf')
     
-    top, up, dn, gs = rn.express(dfp, Ac, Bc, classes=classe, 
-                                    n_top=ntop, geneList=[],  
-                                    ttl=A+'/'+B)
-    top = pd.concat([up,dn], axis=0)
+    #~ top, up, dn, gs = rn.express(dfp, Ac, Bc, classes=classe, 
+                                    #~ n_top=ntop, geneList=[],  
+                                    #~ ttl=A+'/'+B)
+    #top = pd.concat([up,dn], axis=0)
+    
+    rn.cluster(dfsc, Ac, Bc, 
+                classes=classe, 
+                n_top=ntop)
     
     if SAVE:
-        top.to_csv(path+'TOP'+'_'+A+'_vs_'+B+'.csv')
-        up.to_csv(path+'UP'+'_'+A+'_vs_'+B+'.csv')
-        dn.to_csv(path+'DN'+'_'+A+'_vs_'+B+'.csv')
+        #top.to_csv(path+'TOP'+'_'+A+'_vs_'+B+'.csv')
+        up.to_csv(path_out+'UP'+'_'+A+'_vs_'+B+'.csv')
+        dn.to_csv(path_out+'DN'+'_'+A+'_vs_'+B+'.csv')
         plt.savefig(pp, format='pdf')
-
 
 
 
@@ -112,7 +118,7 @@ cols = ['Gene_name', 'TLX3.1_1','TLX3.1_5','TLX3.1_P','R2.RAG1W.RAG1','RAGS.RAGZ
 
 tbn = tbl[cols]
 tbv = tbn.set_index(keys=tbn.columns[0])
-tbv.index=tbv.index.str.upper()
+#tbv.index=tbv.index.str.upper()
 # ---
 
 ### == UP analysis
@@ -127,12 +133,16 @@ if SAVE:
     plt.savefig(pp, format='pdf')
 
 # -- Cluster
-gr = rn.cluster(tbu, A, B, classes, n_top=2*ntop)
-gr.ax_heatmap.set_title('Cluster UP_RP'+A+'/'+B)
+gr = rn.cluster(tbu, A, B, classes, n_top=ntop)
+gr.ax_heatmap.set_title('Cluster UP_RP '+A+'/'+B)
 
 if SAVE:
     plt.savefig(pp, format='pdf')
 # ---
+
+
+
+
 
 ### == DN analysis
 gl_dn = list(dn.index)
@@ -146,22 +156,28 @@ if SAVE:
     plt.savefig(pp, format='pdf')
 
 # -- Cluster
-gr = rn.cluster(tbn, A, B, classes, n_top=2*ntop)
-gr.ax_heatmap.set_title('Cluster _RP'+A+'/'+B)
+gr = rn.cluster(tbn, A, B, classes, n_top=ntop)
+gr.ax_heatmap.set_title('Cluster DN_RP '+A+'/'+B)
 
 if SAVE:
     plt.savefig(pp, format='pdf')
 
 ### =================
 
+if SAVE:
+    pp.close()
 
-#~ plt.show()
-#~ sys.exit(0)
+plt.show()
+
+### STOP ###
+plt.show()
+sys.exit(0)
+
+
+
 
 ## === TLX3 peaks analysis =====
 ## ============================= 
-
-
 
 ## Load TLX peaks file
 colm9 = ['chr_mm9','start_mm9','end_mm9', 'gene_name']
@@ -184,8 +200,7 @@ allTLX_list.sort()
 
 
 ### == UP analysis
-tss =  3000
-up_rp = dfs.loc[dfs['gene_name'].str.upper().isin(list(up.index))]
+up_rp = dfs.loc[dfs['gene_name'].isin(list(up.index))]
 up_rp = up_rp[up_rp['end_mm9']-up_rp['start_mm9']>0]
 up_rp = pb.BedTool.from_dataframe(up_rp[colm9])
 up_rp = up_rp.slop(b=tss, genome='mm9')
@@ -200,14 +215,13 @@ upTLX_list.sort()
 print('UP_RP_with_TLX = ', upTLX_list)
 
 if SAVE:
-    up_rp_gene.to_csv(path+'UP_TLX3_peaks'+'_'+A+'_vs_'+B+'.csv')
+    up_rp_gene.to_csv(path_out+'UP_TLX3_peaks'+'_'+A+'_vs_'+B+'.csv')
 
 ### =================
 
 
 ### == DN analysis
-tss =  3000
-dn_rp = dfs.loc[dfs['gene_name'].str.upper().isin(list(dn.index))]
+dn_rp = dfs.loc[dfs['gene_name'].isin(list(dn.index))]
 dn_rp = dn_rp[dn_rp['end_mm9']-dn_rp['start_mm9']>0]
 dn_rp = pb.BedTool.from_dataframe(dn_rp[colm9])
 dn_rp = dn_rp.slop(b=tss, genome='mm9')
@@ -222,7 +236,7 @@ dnTLX_list.sort()
 print('DN_RP_with_TLX = ', dnTLX_list)
 
 if SAVE:
-    dn_rp_gene.to_csv(path+'DN_TLX3_peaks'+'_'+A+'_vs_'+B+'.csv')
+    dn_rp_gene.to_csv(path_out+'DN_TLX3_peaks'+'_'+A+'_vs_'+B+'.csv')
 
 ### =================
 
@@ -261,7 +275,7 @@ enhm_df = enhm.to_dataframe()
 en_g = pd.read_table('tracks/Enhancers_ChromHMM_genes2enh.txt', 
                     header=1, 
                     names=['gene_name','enhancers'])
-en_g['gene_name'] = en_g['gene_name'].str.upper()
+#~ en_g['gene_name'] = en_g['gene_name'].str.upper()
 
 
 ### == UP analysis
@@ -281,8 +295,8 @@ for gen in up_gen_enh:
 up_enh_bed = pb.BedTool.from_dataframe(up_enh)
 
 if SAVE:
-    up_enh_bed.saveas(path+'UP_RP_enhancers.bed')
-    with open(path+'UP_RP_enhancers_genes.txt', 'w') as fp:
+    up_enh_bed.saveas(path_out+'UP_RP_enhancers.bed')
+    with open(path_out+'UP_RP_enhancers_genes.txt', 'w') as fp:
         fp.write("\n".join(up_gen_enh))
 
 
@@ -306,8 +320,8 @@ for gen in dn_gen_enh:
 dn_enh_bed = pb.BedTool.from_dataframe(dn_enh)
 
 if SAVE:
-    dn_enh_bed.saveas(path+'DN_RP_enhancers.bed')
-    with open(path+'DN_RP_enhancers_genes.txt', 'w') as fp:
+    dn_enh_bed.saveas(path_out+'DN_RP_enhancers.bed')
+    with open(path_out+'DN_RP_enhancers_genes.txt', 'w') as fp:
         fp.write("\n".join(dn_gen_enh))
 
 
@@ -349,9 +363,9 @@ tf_up_not_tlx = tf_up_not_tlx[tf_up_not_tlx['regulator_symbol'].isin(allTLX_Lst)
 
 
 if SAVE:
-    tf_up.to_csv(path+'UP_RegNetwork.csv')
-    tf_up_tlx.to_csv(path+'UP_RegNetwork_TLX3.csv')
-    tf_up_not_tlx.to_csv(path+'UP_RegNetwork_notTLX3.csv')
+    tf_up.to_csv(path_out+'UP_RegNetwork.csv')
+    tf_up_tlx.to_csv(path_out+'UP_RegNetwork_TLX3.csv')
+    tf_up_not_tlx.to_csv(path_out+'UP_RegNetwork_notTLX3.csv')
 ### =================
 
 # == DN analysis
@@ -368,23 +382,11 @@ tf_dn_not_tlx = tf_dn[~tf_dn['target_symbol'].isin(dnTLX_Lst)]
 tf_dn_not_tlx = tf_dn_not_tlx[tf_dn_not_tlx['regulator_symbol'].isin(allTLX_Lst)]
 
 if SAVE:
-    tf_dn.to_csv(path+'DN_RegNetwork.csv')
-    tf_dn_tlx.to_csv(path+'DN_RegNetwork_TLX3.csv')
-    tf_dn_not_tlx.to_csv(path+'DN_RegNetwork_notTLX3.csv')
+    tf_dn.to_csv(path_out+'DN_RegNetwork.csv')
+    tf_dn_tlx.to_csv(path_out+'DN_RegNetwork_TLX3.csv')
+    tf_dn_not_tlx.to_csv(path_out+'DN_RegNetwork_notTLX3.csv')
 ### =================
 
-
-
-
-
-
-
-if SAVE:
-    pp.close()
-
-
-
-plt.show()
 
 
 ### ==== GSEA Enrichr =================

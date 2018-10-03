@@ -44,10 +44,12 @@ def write_dic2gmt(dic, name, path=''):
 
 
 # == Load gene set in gmt format
-def read_gmt(name, path=''):
-    with open(join(path,name)) as f:
-         gene_list = f.read().split()[2:]
-    return list(gene_list)
+def read_gmt(gmt):
+    with open(gmt) as f:
+         gene_dict = { line.strip().split("\t")[0]: [ln.split(",")[0] for ln in line.strip().split("\t")[2:]]
+                          for line in f.readlines()}
+    return gene_dict
+
 
 ## == Proper read .narrowPeak files
 def read_narrowPeak(name, path=''):
@@ -64,6 +66,21 @@ def write_df2bed(df,name, path='' ):
                                         index=False,
                                         header=False)
 
+
+def dist_kappa(setR, set1,set2):
+    a = len(setR & set1 & set2)
+    b = len((setR & set1) - set2)
+    c = len((setR & set2) - set1)
+    d = len((setR - set1) - set2)
+    t = a + b + c + d
+    p0 = np.float64(a + d)/t
+    pY = np.float64((a + b)*(a + c))/(t*t)
+    pN = np.float64((c + d)*(b + d))/(t*t)
+    pe = pY + pN
+    k = np.float64((p0 - pe))/np.float64(1 - pe)
+
+    return np.float64(k)
+
 ## == Enrichment analysis P-values
 def pValue(tot, num_a, num_b, num_ab):
     # tot:    total number of genes 
@@ -77,6 +94,18 @@ def pValue(tot, num_a, num_b, num_ab):
     #~ a p-value where by random chance number of genes with both condition A and B will be <= to your number with condition A and B
     #~ a p-value where by random chance number of genes with both condition A and B will be >= to your number with condition A and B
     #~ The second p-value is probably what you want
+    
+    return st.hypergeom.sf(int(num_ab) - 1,int(tot),int(num_a),int(num_b))
+
+
+def pValue_sets(setA, setB, tot=20000):
+    # tot:    total number of genes 
+    # num_a:  total number of genes in the list with condition A
+    # num_b:  total number of genes in the list with condition B
+    # num_ab: number of genes with both condition A and B
+    num_a=len(setA)
+    num_b=len(setB)
+    num_ab=len(setA & setB)
     
     return st.hypergeom.sf(int(num_ab) - 1,int(tot),int(num_a),int(num_b))
 
@@ -653,7 +682,7 @@ def scatter_n(df, A, B, classes, n_top=0, ttl=''):
                 color=cpp['up'])
         ax.text(df['lg'+B][-i-1]+rx,
                 df['lg'+A][-i-1]+ry,
-                df.index[i], 
+                df.index[-i-1], 
                 color=cpp['down'])
                 
     ax.text(0.37,0.95, 'UP: '+str(len(up)),
@@ -699,8 +728,8 @@ def volcano_n(df, A, B, classes, n_top=0, ttl=''):
                     palette=cpp, 
                     linewidth=0, 
                     s=3.4)
-    ax.set_xlabel('log FC')
-    ax.set_ylabel('-log10($p_{val}$)')
+    ax.set_xlabel('log(FC)')
+    ax.set_ylabel('$-log_{10}(p_{val}$)')
     ax.set_title(A+'/'+B+' '+ttl)
     ax.axis('equal')
     ax.axis('tight')
@@ -770,5 +799,11 @@ def exp_deg(df, A, B, classes):
 # And if need remove of duplicated index to unique:
 # df1.index = df1.index + df1.groupby(level=0).cumcount().astype(str).replace('0','')
 
+#~ In [13]: dff = pd.DataFrame({'index':['b','a','a','c'], 'values':[10,20,30,40]})
+#~ In [14]: dff.set_index(['index'], inplace=True)
+#~ In [16]: dff.index
+#~ Out[16]: Index(['b', 'a', 'a', 'c'], dtype='object', name='index')
 
+#~ In [17]: dff.index.get_loc('a')
+#~ Out[17]: array([False,  True,  True, False])
 
