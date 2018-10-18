@@ -3,6 +3,7 @@
 import pybedtools as pb
 import numpy as np
 import yaml
+import sys
 from os.path import join 
 import pandas as pd
 import gseapy as gp
@@ -72,6 +73,11 @@ with plt.style.context('default'):
     #sns.distplot(pk['score'], bins=150, hist=True, norm_hist=True)
 
 
+
+print(nm)
+### STOP ###
+plt.show()
+sys.exit(0)
 
 # ==== Genes expression
 # ==============================

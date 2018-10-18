@@ -170,8 +170,8 @@ if SAVE:
 plt.show()
 
 ### STOP ###
-plt.show()
-sys.exit(0)
+#~ plt.show()
+#~ sys.exit(0)
 
 
 
@@ -293,11 +293,20 @@ for gen in up_gen_enh:
     up_enh = pd.concat([ehGene,up_enh], ignore_index=True)
 
 up_enh_bed = pb.BedTool.from_dataframe(up_enh)
+up_enh_bed_tlx = up_enh_bed+tlx_peak
+
+df_up = up_enh_bed_tlx.to_dataframe()
+
+up_enh_tlx_genes = [nm.split('_')[2] for nm in df_up['name']]
+up_enh_tlx_genes = list(set(up_enh_tlx_genes))
 
 if SAVE:
     up_enh_bed.saveas(path_out+'UP_RP_enhancers.bed')
+    up_enh_bed_tlx.saveas(path_out+'UP_RP_enh_TLX3_pck.bed')
     with open(path_out+'UP_RP_enhancers_genes.txt', 'w') as fp:
         fp.write("\n".join(up_gen_enh))
+    with open(path_out+'UP_RP_enh_TLX3_pck_genes.txt', 'w') as fp:
+        fp.write("\n".join(up_enh_tlx_genes))
 
 
 ### =================
@@ -318,17 +327,29 @@ for gen in dn_gen_enh:
     dn_enh = pd.concat([ehGene,dn_enh], ignore_index=True)
 
 dn_enh_bed = pb.BedTool.from_dataframe(dn_enh)
+dn_enh_bed_tlx = dn_enh_bed+tlx_peak
+
+df_dn = dn_enh_bed_tlx.to_dataframe()
+
+dn_enh_tlx_genes = [nm.split('_')[2] for nm in df_dn['name']]
+dn_enh_tlx_genes = list(set(dn_enh_tlx_genes))
+
 
 if SAVE:
     dn_enh_bed.saveas(path_out+'DN_RP_enhancers.bed')
+    dn_enh_bed_tlx.saveas(path_out+'DN_RP_enh_TLX3_pck.bed')
     with open(path_out+'DN_RP_enhancers_genes.txt', 'w') as fp:
         fp.write("\n".join(dn_gen_enh))
+    with open(path_out+'DN_RP_enh_TLX3_pck_genes.txt', 'w') as fp:
+        fp.write("\n".join(dn_enh_tlx_genes))
 
 
 ### =================
 
 
-
+### STOP ###
+plt.show()
+sys.exit(0)
 
 
 
