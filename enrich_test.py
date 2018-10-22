@@ -58,25 +58,22 @@ for gs in gss:
 # p-Value filter
 enrr = enrr[enrr['p-Val']<0.005]
 
+
+
+
+## Cluster
+enrr = erl.cluster(setR,enrr)
+
+## Graph and network
+nt, nt_tb, G = erl.make_graph(setR, enrr, draw=True)
+
 ## Show cluster
 dd = erl.dist_matrx(setR,enrr)
 grid = sns.clustermap(dd, cmap='Blues', figsize=(16, 16))
 
-
-
-enrr = erl.cluster(setR,enrr)
-
+plt.show()
 
 if SAVE:
     enrr.to_csv(exp_name+'-enrich.txt', sep="\t")
-
-
-nt, nt_tb, G = erl.make_graph(setR, enrr, draw=True)
-
-
-if SAVE:
     nt.to_csv(exp_name+'-network.txt', sep="\t")
     nt_tb.to_csv(exp_name+'-network_table.txt', sep="\t")
-
-
-plt.show()
