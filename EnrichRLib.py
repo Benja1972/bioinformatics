@@ -45,13 +45,13 @@ def coeff_kappa(setR, set1,set2):
     c = len((setR & set2) - set1)
     d = len((setR - set1) - set2)
     t = a + b + c + d
-    p0 = np.float64(a + d)/t
-    pY = np.float64((a + b)*(a + c))/(t*t)
-    pN = np.float64((c + d)*(b + d))/(t*t)
+    p0 = np.float32(a + d)/t
+    pY = np.float32((a + b)*(a + c))/(t*t)
+    pN = np.float32((c + d)*(b + d))/(t*t)
     pe = pY + pN
-    k = np.float64((p0 - pe))/np.float64(1 - pe)
+    k = np.float32((p0 - pe))/np.float32(1 - pe)
 
-    return np.float64(k)
+    return np.float32(k)
 
 def pValue_sets(setA, setB, tot=20000):
     # tot:    total number of genes 
@@ -178,7 +178,7 @@ def cluster(setR, enr):
     return enr
 
 
-def make_graph(setR, enr, kappa=0.4, draw=False):
+def make_graph(setR, enr, kappa=0.4, draw=False, palette='tab20'):
     setR = set(setR)
     ## Cluster
     enr = cluster(setR,enr)
@@ -234,5 +234,5 @@ def make_graph(setR, enr, kappa=0.4, draw=False):
                 node_color = cl,
                 node_size =  sz,
                 font_size=8,
-                ) 
+                cmap = palette) 
     return nt, nt_tb, G
