@@ -1,6 +1,7 @@
 from time import sleep
 import requests
 from os.path import join 
+import os
 import json
 import numpy as np
 import pandas as pd
@@ -84,11 +85,20 @@ def p_adjust(pvalue, method="fdr"):
     return p0
 
 # === Fetch all Enrichr libs
-def get_Enrichr(out_dir = 'EnrichrLibs'):
+def get_Enrichr(out_dir = 'EnrichrLibs', libs='all'):
+    # Create target directory & all intermediate directories if don't exists
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+        print("Directory " , out_dir ,  " created ")
+    else:    
+        print("Directory " , out_dir ,  " already exists")    
 
-    lib_url='http://amp.pharm.mssm.edu/Enrichr/datasetStatistics'
-    libs_json = json.loads(requests.get(lib_url).text)
-    gss = [lib['libraryName'] for lib in libs_json['statistics']]
+    if libs=='all':
+        lib_url='http://amp.pharm.mssm.edu/Enrichr/datasetStatistics'
+        libs_json = json.loads(requests.get(lib_url).text)
+        gss = [lib['libraryName'] for lib in libs_json['statistics']]
+    else:
+        gss = libs
 
     link = 'http://amp.pharm.mssm.edu/Enrichr/geneSetLibrary?mode=text&libraryName='
 
@@ -99,7 +109,7 @@ def get_Enrichr(out_dir = 'EnrichrLibs'):
         with open(fn, mode='w') as f:
             f.write(res.text)
         sleep(2)
-        print(gs)
+        print(gs, " -- DONE")
 
 
 # === Enrich single gene set
