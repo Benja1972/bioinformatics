@@ -54,6 +54,14 @@ def coeff_kappa(setR, set1,set2):
 
     return np.float32(k)
 
+def coeff_jaccard(set1,set2):
+    a = len(set1 & set2)
+    b = len(set1 | set2)
+    jac = np.float32(a)/np.float32(b)
+
+    return jac
+
+
 def pValue_sets(setA, setB, tot=20000):
     # tot:    total number of genes 
     # num_a:  total number of genes in the list with condition A
@@ -116,9 +124,10 @@ def get_Enrichr(out_dir = 'EnrichrLibs', libs='all'):
 def enrich(setR,gs):
     setR = set(setR)
     enr = pd.DataFrame(index=gs.keys(), 
-                        columns=['p-Val', 'num_list', 'num_term', 'genes']) 
+                        columns=['p-Val', 'num_list', 'num_term', 'genes', 'term_genes']) 
 
     for term, g in gs.items():
+        enr.loc[term]['term_genes']  = list(g)
         set1 = set(g)
         enr.loc[term]['p-Val'] = pValue_sets(setR, set1)
         enr.loc[term]['num_list'] = int(len(setR & set1))
@@ -157,26 +166,45 @@ def enrich_gs(setR,gss, path_lib='EnrichrLibs'):
 
 
 # ==== Distance matrix for clustering 
-def dist_matrx(setR,enr):
+def kappa_matrx(setR,enr):
     setR = set(setR)
     terms = list(enr.index)
 
-    # Distance matrix
+    # Similarity matrix
     dd = pd.DataFrame(index=terms, columns=terms)
 
     for ter1 in terms:
-        set1 = set(list(enr['genes'].loc[ter1]))
+        set1 = set(list(enr['term_genes'].loc[ter1]))
         for ter2 in terms:
-            set2 = set(list(enr['genes'].loc[ter2]))
+            set2 = set(list(enr['term_genes'].loc[ter2]))
             dd[ter1][ter2] = coeff_kappa(setR,set1,set2)
 
     dd = dd.astype(float)
     
     return dd
 
+
+def jaccard_matrx(enr):
+    terms = list(enr.index)
+
+    # Similarity matrix
+    dd = pd.DataFrame(index=terms, columns=terms)
+
+    for ter1 in terms:
+        set1 = set(list(enr['term_genes'].loc[ter1]))
+        for ter2 in terms:
+            set2 = set(list(enr['term_genes'].loc[ter2]))
+            dd[ter1][ter2] = coeff_jaccard(set1,set2)
+
+    dd = dd.astype(float)
+    
+    return dd
+
+
+
 def cluster(setR, enr):
     enr = enr.copy()
-    dd = dist_matrx(setR,enr)
+    dd = kappa_matrx(setR,enr)
 
     ## Look to package fastclsuter !!!!!
     metric='euclidean'
@@ -201,10 +229,10 @@ def make_graph(setR, enr, kappa=0.4, draw=False, palette='tab20'):
 
     for i in range(len(terms)):
         ter1 = terms[i]
-        set1 = set(list(enr['genes'].loc[ter1]))
+        set1 = set(list(enr['term_genes'].loc[ter1]))
         for j in range(i):
             ter2 = terms[j]
-            set2 = set(list(enr['genes'].loc[ter2]))
+            set2 = set(list(enr['term_genes'].loc[ter2]))
             cm = list(setR & set1 & set2)
             rw = pd.DataFrame([[ter1, ter2, coeff_kappa(setR,set1,set2), cm]], columns=col)
             nt = nt.append(rw,  ignore_index=True)
