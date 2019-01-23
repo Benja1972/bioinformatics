@@ -1,10 +1,16 @@
 
 import numpy as np
 import pandas as pd
-from os.path import join 
 import sklearn.cluster as sc
 import seaborn as sns
 import matplotlib.pyplot as plt
+
+## project settings ===
+from os.path import join 
+WORKDIR = '/home/sergio/Res_CIML/TLX3_project'
+SCRIPTS = join(WORKDIR,'scripts')
+DATADIR = join(WORKDIR,'data')
+## =====================
 
 
 def log2p1(x):
@@ -13,7 +19,7 @@ def log2p1(x):
 # test
 
 # === Load expression table 
-tbl = pd.read_table(join('tracks', 'TLX3vsRAG-results_genes.txt'), index_col=0)
+tbl = pd.read_table(join(DATADIR,'tracks', 'TLX3vsRAG-results_genes.txt'), index_col=0)
 
 
 # Filter genes (Note: this filter remove microRNA expression)
@@ -21,7 +27,7 @@ tbl = tbl[(tbl.padj < 0.05)].dropna()
 
 
 # === Load gene names 
-names = pd.read_table("tracks/annot_tracks/references/mm9/mm9_EnsemblTransc_GeneNames.txt", 
+names = pd.read_table(join(DATADIR,"tracks/annot_tracks/references/mm9/mm9_EnsemblTransc_GeneNames.txt"), 
                            index_col=0,
                            header=0,
                            names=['GeneID', 'TransID', 'Gene_name'])
