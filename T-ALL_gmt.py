@@ -1,10 +1,12 @@
 import pandas as pd
 from os.path import join
 
+## project settings ===
+from os.path import join 
 WORKDIR = '/home/sergio/Res_CIML/TLX3_project'
 SCRIPTS = join(WORKDIR,'scripts')
 DATADIR = join(WORKDIR,'data')
-
+## =====================
 
 def write_dic2gmt(dic, name, path=''):
     with open(join(path,name+'.gmt'), 'w') as fp:
