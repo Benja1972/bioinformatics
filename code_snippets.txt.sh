@@ -24,3 +24,17 @@ done
 
 # Split VCF file by samples
 $ bcftools view -c1 -Oz -s AC3812,AC3813 -o TAP_WGS.vcf.gz FERRIER_09_Germline.allchr.snpEff.p.SAL.SAL10_1.vcf.gz
+
+# Intersect VCF
+bcftools isec -p dir A.vcf.gz B.vcf.gz
+bcftools isec -p dir A.vcf.gz B.vcf.gz C.vcf.gz D.vcf.gz E.vcf.gz F.vcf.gz -n=6
+
+
+########################################
+# Call variants by bcftools
+# http://samtools.github.io/bcftools/howtos/variant-calling.html
+
+bcftools mpileup -Ou -f reference.fa alignments.bam | bcftools call -mv -Ob -o calls.bcf
+
+
+bcftools view calls.bcf | vcfutils.pl varFilter - > calls_filter.vcf
