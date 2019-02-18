@@ -38,3 +38,43 @@ bcftools mpileup -Ou -f reference.fa alignments.bam | bcftools call -mv -Ob -o c
 
 
 bcftools view calls.bcf | vcfutils.pl varFilter - > calls_filter.vcf
+
+########################################
+## === get DAN seqs from bed coordinates from Python
+## ATTENTION!!! give 0-based fasta not compatible with bcftools consensus
+mm9 = "/home/sergio/media/NAS4/PFlab/TLX3_project/ChiP-Seq/references/mm9/chromFa/mm9.fa"
+
+# --- 
+bd = "tracks/HMMenh_tlx_notFantom_topScore40.bed"
+fa = "tracks/HMMenh_tlx_notFantom_topScore40.fa"
+bd2fa = "bedtools getfasta -fi {} -bed {} -fo {}".format(mm9,bd,fa)
+
+print('Running process ........ \n')
+print(bd2fa)
+
+########################################
+# == get DNA coordinates and apply mutation in VCF
+faidx -b test.bed reference_genome.fa -o in.fa
+bcftools consensus -f in.fa mut.vcf.gz > out.fa
+
+# Pythonic way
+# https://github.com/mdshw5/pyfaidx
+from pyfaidx import Fasta
+
+fn = 'reference_genome.fa'
+fa = Fasta(fn)
+reg = fa['chr1'][85280067:85281276]
+out  = open('out.fa',"w")
+out.write('>'+reg.longname+'\n'+reg.seq)
+out.close()
+
+# etc.
+
+# The FastaVariant class provides a way to integrate single nucleotide variant calls to generate a consensus sequence.
+
+consensus = FastaVariant('tests/data/chr22.fasta', 'tests/data/chr22.vcf.gz', het=True, hom=True)
+RuntimeWarning: Using sample NA06984 genotypes.
+
+
+
+
