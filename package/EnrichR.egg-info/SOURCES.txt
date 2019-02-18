@@ -1,0 +1,8 @@
+README.md
+setup.py
+EnrichR/__init__.py
+EnrichR/core.py
+EnrichR.egg-info/PKG-INFO
+EnrichR.egg-info/SOURCES.txt
+EnrichR.egg-info/dependency_links.txt
+EnrichR.egg-info/top_level.txt

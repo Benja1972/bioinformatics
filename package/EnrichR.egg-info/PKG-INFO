@@ -1,0 +1,17 @@
+Metadata-Version: 2.1
+Name: EnrichR
+Version: 0.0.1
+Summary: Enrichment analysis with clustering
+Home-page: https://github.com/Benja1972/bioinformatics
+Author: Sergei RYBALKO
+Author-email: benja1972@gmail.com
+License: UNKNOWN
+Description: # EnrichR 
+        
+        This is a simple package for enrichment analysis with clustering.
+        [Github-flavored Markdown](https://github.com/Benja1972/bioinformatics/)
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown
