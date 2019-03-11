@@ -41,7 +41,7 @@ bcftools view calls.bcf | vcfutils.pl varFilter - > calls_filter.vcf
 
 ########################################
 ## === get DAN seqs from bed coordinates from Python
-## ATTENTION!!! give 0-based fasta not compatible with bcftools consensus
+## ATTENTION!!! gives 0-based fasta not compatible with bcftools consensus
 mm9 = "/home/sergio/media/NAS4/PFlab/TLX3_project/ChiP-Seq/references/mm9/chromFa/mm9.fa"
 
 # --- 
