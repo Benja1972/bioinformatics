@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pybedtools as pb
+import deeptools.getScorePerBigWigBin as gs
 
 
 def enh_gene(genl,df):
@@ -122,3 +123,58 @@ def freq_on_gene(var):
     frq.sort_values('num_mut', axis=0, inplace=True, ascending=False)
     
     return frq
+
+
+
+def bigWig2bed_pot(bw,bed,genome,pad=1e5,alpha=10):
+    """
+    Function calculates "regulatory potential" of bigWig track around summit points of bed
+    
+    Parametes
+    ---------
+    bw : bigWig file, ex. 'TLX3_H327ac.bw'
+    bed : bed file with regions; ex. bed = pb.BedTool('genes.bed')
+    genome : genome; ex. 'mm10'
+    pad : padding; -pad|------summit------|+pad
+    alpha :  exponential parameter for decay fucntion of weights 
+    
+    Returns
+    ------
+    df :  dataframe with potentials for all regions in bed
+    
+    Notes
+    -----
+    Weights
+    .. math :: w(x)=\frac{2e^{-\alpha|x|}}{1+e^{-\alpha|x|}}
+    """
+    
+    bed_df = bed.to_dataframe()
+    bed_df['mid'] = (bed_df['end'] + bed_df['start'])/2
+    bed_df['mid'] = bed_df['mid'].astype('int')
+    bed_df['mid_end'] = bed_df['mid'] + 1
+
+    col = ['chrom','mid','mid_end', 'name']
+
+    tss = pb.BedTool.from_dataframe(bed_df[col])
+
+    pad = int(pad)
+    z = np.arange(-pad,pad+1)
+    wt = 2.0*np.exp(-alpha*np.fabs(z)/1e5)/(1.0+np.exp(-alpha*np.fabs(z)/1e5))
+
+    df = tss.slop(b=pad, genome=genome).to_dataframe()
+
+    for i, row in df.iterrows():
+
+        cnt = tss[i].start
+        st = df.loc[i,'start']
+        end = df.loc[i,'end']
+        chrom = df.loc[i,'chrom']
+
+        vl = gs.countFragmentsInRegions_worker(chrom, st, end, [bw], 1, 1, False)
+        vl = np.transpose(np.squeeze(vl[0]))
+
+        vl  = np.hstack((np.zeros(st - cnt + pad),vl,np.zeros(cnt + pad - end +1 )))
+        df.loc[i,'potential'] = np.dot( vl, wt)
+    
+    return df
+
