@@ -126,7 +126,7 @@ def freq_on_gene(var):
 
 
 
-def bigWig2bed_pot(bw,bed,genome,pad=1e5,alpha=10):
+def bigWig2bed_pot(bw,bed,genome,pad=1e5,alpha=10, step=1):
     """
     Function calculates "regulatory potential" of bigWig track around summit points of bed
     
@@ -158,7 +158,7 @@ def bigWig2bed_pot(bw,bed,genome,pad=1e5,alpha=10):
     tss = pb.BedTool.from_dataframe(bed_df[col])
 
     pad = int(pad)
-    z = np.arange(-pad,pad+1)
+    z = np.arange(-pad,pad+1, step)
     wt = 2.0*np.exp(-alpha*np.fabs(z)/1e5)/(1.0+np.exp(-alpha*np.fabs(z)/1e5))
 
     df = tss.slop(b=pad, genome=genome).to_dataframe()
@@ -170,7 +170,7 @@ def bigWig2bed_pot(bw,bed,genome,pad=1e5,alpha=10):
         end = df.loc[i,'end']
         chrom = df.loc[i,'chrom']
 
-        vl = gs.countFragmentsInRegions_worker(chrom, st, end, [bw], 1, 1, False)
+        vl = gs.countFragmentsInRegions_worker(chrom, int(st), int(end), [bw], step, step, False)
         vl = np.transpose(np.squeeze(vl[0]))
 
         vl  = np.hstack((np.zeros(st - cnt + pad),vl,np.zeros(cnt + pad - end +1 )))
