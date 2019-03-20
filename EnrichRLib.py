@@ -63,10 +63,12 @@ def coeff_jaccard(set1,set2):
 
 
 def pValue_sets(setA, setB, tot=20000):
-    # tot:    total number of genes 
-    # num_a:  total number of genes in the list with condition A
-    # num_b:  total number of genes in the list with condition B
-    # num_ab: number of genes with both condition A and B
+    """
+    tot:    total number of genes 
+    num_a:  total number of genes in the list with condition A
+    num_b:  total number of genes in the list with condition B
+    num_ab: number of genes with both condition A and B
+    """
     num_a=len(setA)
     num_b=len(setB)
     num_ab=len(setA & setB)

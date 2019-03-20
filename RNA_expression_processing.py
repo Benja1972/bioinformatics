@@ -83,26 +83,30 @@ def dist_kappa(setR, set1,set2):
 
 ## == Enrichment analysis P-values
 def pValue(tot, num_a, num_b, num_ab):
-    # tot:    total number of genes 
-    # num_a:  total number of genes in the list with condition A
-    # num_b:  total number of genes in the list with condition B
-    # num_ab: number of genes with both condition A and B
+    """
+    tot:    total number of genes 
+    num_a:  total number of genes in the list with condition A
+    num_b:  total number of genes in the list with condition B
+    num_ab: number of genes with both condition A and B
     
-    # p_val_minus = st.hypergeom.cdf(int(num_ab),int(tot),int(num_a),int(num_b))
-    # p_val_plus  = st.hypergeom.sf(int(num_ab) - 1,int(tot),int(num_a),int(num_b)
+    p_val_minus = st.hypergeom.cdf(int(num_ab),int(tot),int(num_a),int(num_b))
+    p_val_plus  = st.hypergeom.sf(int(num_ab) - 1,int(tot),int(num_a),int(num_b)
 
-    #~ a p-value where by random chance number of genes with both condition A and B will be <= to your number with condition A and B
-    #~ a p-value where by random chance number of genes with both condition A and B will be >= to your number with condition A and B
-    #~ The second p-value is probably what you want
+    a p-value where by random chance number of genes with both condition A and B will be <= to your number with condition A and B
+    a p-value where by random chance number of genes with both condition A and B will be >= to your number with condition A and B
+    The second p-value is probably what you want
+    """
     
     return st.hypergeom.sf(int(num_ab) - 1,int(tot),int(num_a),int(num_b))
 
 
 def pValue_sets(setA, setB, tot=20000):
-    # tot:    total number of genes 
-    # num_a:  total number of genes in the list with condition A
-    # num_b:  total number of genes in the list with condition B
-    # num_ab: number of genes with both condition A and B
+    """
+    tot:    total number of genes 
+    num_a:  total number of genes in the list with condition A
+    num_b:  total number of genes in the list with condition B
+    num_ab: number of genes with both condition A and B
+    """
     num_a=len(setA)
     num_b=len(setB)
     num_ab=len(setA & setB)

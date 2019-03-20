@@ -1,7 +1,22 @@
 import numpy as np
 import pandas as pd
+import sys,os
+
+# -- genomic tools
 import pybedtools as pb
 import deeptools.getScorePerBigWigBin as gs
+from Bio.Seq import MutableSeq
+from pyfaidx import Fasta
+import allel
+
+# -- figs libs
+import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import matplotlib.patheffects
+from matplotlib import transforms
+from matplotlib.font_manager import FontProperties
+import matplotlib as mpl
 
 
 def enh_gene(genl,df):
@@ -55,25 +70,6 @@ def gene_variants(gl,var,genes):
     return  var_gl, genes_l
 
 
-#~ def bed_variants_counts(var,bed):
-    #~ """
-    #~ Function counts variants in region bed file
-    
-    #~ Parametrs
-    #~ ---------
-    #~ var : variant DataFrame; ex. var = allel.vcf_to_dataframe('fn.vcf')
-    #~ bed : bed file with regions; ex. bed = pb.BedTool('genes.bed')
-    #~ """
-    #~ bed = bed.to_dataframe()
-    
-    #~ var_bd = pd.DataFrame()
-    #~ for idx, row in bed.iterrows():
-        #~ vg = var[(var['CHROM']==row['chrom']) & (var['POS']>row['start']) & (var['POS']<row['end'])]
-        #~ bed.loc[idx,'counts'] = int(len(vg))
-        #~ var_bd = pd.concat([var_bd, vg])
-    #~ return  var_bd , bed
-
-
 
 def bed_variants(var,bed):
     """
@@ -103,9 +99,7 @@ def variants_bed_counts(var,bed):
     bed_out : bed with last 'counts' column 
     """
     bed_out = bed.intersect(var, c=True)
-    #~ bed_df = bed_out.to_dataframe()
-    #~ bed_df = bed_df[['chrom', 'start', 'end','thickStart', 'name']]
-    #~ bed_out = pb.BedTool.from_dataframe(bed_df)
+
     return bed_out
 
 
