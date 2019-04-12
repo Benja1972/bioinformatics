@@ -76,5 +76,14 @@ consensus = FastaVariant('tests/data/chr22.fasta', 'tests/data/chr22.vcf.gz', he
 RuntimeWarning: Using sample NA06984 genotypes.
 
 
+####################################
+# apply learnet model to binarized data
 
+#Description
+#This command takes a saved model file and binarized data and outputs files with the segmentation state assignments
+#and/or the posterior state probabilities. These files can also be outputted by LearnModel, but this command enables
+#producing the segmentations without the need to relearn the model.
+
+
+ChromHMM.sh MakeSegmentation model_6.txt binarized_RAG out_RAG
 

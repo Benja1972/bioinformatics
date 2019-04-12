@@ -158,7 +158,8 @@ def plot_mutmap(fs,mdl):
     fig = plt.figure(figsize=(10, 4))
     
     ax1 = fig.add_subplot(211)
-    sns.heatmap(df, cmap='RdBu_r', ax=ax1, cbar = False, square=True)
+    #sns.heatmap(df, cmap='RdBu_r', ax=ax1, cbar = False, square=True, center=0.0)
+    sns.heatmap(df, cmap='seismic', ax=ax1, cbar = False, square=True, center=0.0)
     
     sm = (abs(df[df<0].sum(axis=0))+abs(sc))/abs(sc)
     
@@ -173,73 +174,77 @@ def plot_mutmap(fs,mdl):
 
 
 ### main ###
+if False:
+    db_f = '/home/sergio/tools/deepbind/db/db.tsv'
 
-db_f = '/home/sergio/tools/deepbind/db/db.tsv'
+    db = pd.read_csv(db_f, sep='\t',comment="#", index_col=0)
+    db = db[db['Labels'].isnull()]
 
-db = pd.read_csv(db_f, sep='\t',comment="#", index_col=0)
-db = db[db['Labels'].isnull()]
 
+
+
+
+    fn = '/home/sergio/media/NAS4/PFlab/TLX3_project/WES-seq/references/mouse_mm9_reference_genome.fa'
+    vn = '/home/sergio/Res_CIML/TLX3_project/data/tracks/WGS-WES/Exomes/WES_TLX3_TAP.vcf'
+
+
+    var = allel.vcf_to_dataframe(vn,fields='*', numbers={'ALT': 2})
+    vnt  = var.loc[1]
+
+    fa = Fasta(fn)
+    rg = fa['chr1'][6372606:6372646]
+
+    if rg.name== vnt['CHROM']:
+        pos = vnt['POS'] -rg.start
+    else:
+        print('It is not correct variant')
+        pos = np.nan
+
+    ref = vnt['REF'].upper()
+    alt = vnt['ALT_1'].upper()
+
+
+    fs = rg.seq.upper()
+    fm = mut(fs,pos,ref,alt)
+
+
+    print('pos = ', pos, 'REF = ', ref, 'ALT =', alt) 
+    print('fs = ', fs)
+    print('fm = ', fm)
+
+
+    ### Find best model
+
+    db['score'] = list(deepbind_list(list(db.index),fs)['score'])
+
+
+    dbl_s = db.sort_values('score',axis=0, ascending=False)
+
+    bst=3
+    mdl = dbl_s.index[bst]
+
+
+
+
+
+
+    ### Figures ####
+    if True:
+        
+        plot_mutmap(fs,mdl)
+        plt.title(dbl_s.iloc[bst]['Protein'])
+        plot_mutmap(fm,mdl)
+        plt.title(dbl_s.iloc[bst]['Protein'])
+        
+        plt.show()
+
+
+import Enh_Mut_Manip as emm
 ## test model from paper
-#~ fa = 'CGTAAAGCCCTTGATAAACCCCTTCCCTGGA'
-#~ md = 'D00411.003'
-
-
-
-fn = '/home/sergio/media/NAS4/PFlab/TLX3_project/WES-seq/references/mouse_mm9_reference_genome.fa'
-vn = '/home/sergio/Res_CIML/TLX3_project/data/tracks/WGS-WES/Exomes/WES_TLX3_TAP.vcf'
-
-
-var = allel.vcf_to_dataframe(vn,fields='*', numbers={'ALT': 2})
-vnt  = var.loc[1]
-
-fa = Fasta(fn)
-rg = fa['chr1'][6372606:6372646]
-
-if rg.name== vnt['CHROM']:
-    pos = vnt['POS'] -rg.start
-else:
-    print('It is not correct variant')
-    pos = np.nan
-
-ref = vnt['REF'].upper()
-alt = vnt['ALT_1'].upper()
-
-
-fs = rg.seq.upper()
-fm = mut(fs,pos,ref,alt)
-
-
-print('pos = ', pos, 'REF = ', ref, 'ALT =', alt) 
-print('fs = ', fs)
-print('fm = ', fm)
-
-
-### Find best model
-
-db['score'] = list(deepbind_list(list(db.index),fs)['score'])
-
-
-dbl_s = db.sort_values('score',axis=0, ascending=False)
-
-bst=3
-mdl = dbl_s.index[bst]
-
-
-
-
-
-
-### Figures ####
-if True:
-    
-    plot_mutmap(fs,mdl)
-    plt.title(dbl_s.iloc[bst]['Protein'])
-    plot_mutmap(fm,mdl)
-    plt.title(dbl_s.iloc[bst]['Protein'])
-    
-    plt.show()
-
-
+fa = 'CGTAAAGCCCTTGATAAACCCCTTCCCTGGA'
+md = 'D00411.003'
+emm.plot_mutmap(fa,md)
+plt.show()
 
 ############# for test #############
 

@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import sys,os
+import warnings
 
 # -- genomic tools
 import pybedtools as pb
@@ -163,7 +164,7 @@ def bigWig2bed_pot(bw,bed,genome,pad=1e5,alpha=10, step=1):
         st = df.loc[i,'start']
         end = df.loc[i,'end']
         chrom = df.loc[i,'chrom']
-
+        warnings.simplefilter("default")
         vl = gs.countFragmentsInRegions_worker(chrom, int(st), int(end), [bw], step, step, False)
         vl = np.transpose(np.squeeze(vl[0]))
 
@@ -264,6 +265,24 @@ def draw_motif(sm,ax):
         txt = ax.text(i,0, nt, fontsize=18, weight='bold', color=colors[nt])
         txt.set_path_effects([Scale(1, sm[i])])
     return ax
+
+
+def plot_mutmap(fs,mdl):
+    df = mut_map(fs,mdl)
+    sc = deepbind(fs,mdl)
+    
+    fig = plt.figure(figsize=(10, 4))
+    
+    ax1 = fig.add_subplot(211)
+    #sns.heatmap(df, cmap='RdBu_r', ax=ax1, cbar = False, square=True, center=0.0)
+    sns.heatmap(df, cmap='seismic', ax=ax1, cbar = False, square=True, center=0.0)
+    
+    sm = (abs(df[df<0].sum(axis=0))+abs(sc))/abs(sc)
+    
+    ax2 = fig.add_subplot(212, sharex=ax1)
+    draw_motif(sm,ax2)
+    return fig
+
 
 
 def draw_logo(all_scores, fontfamily='Arial', size=80):

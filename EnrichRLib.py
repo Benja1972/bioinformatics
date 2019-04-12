@@ -19,14 +19,14 @@ def nlog10(x):
     return -np.log10(x)
     
 # == Write gene set in gmt format
-def write_gmt(st, name, path=''):
+def write_gmt(st, name, fn):
     gmt = [name, name] + list(st)
-    with open(join(path,name+'.gmt'), 'w') as fp:
+    with open(fn, 'w') as fp:
         fp.write("\t".join(gmt))
 
 # == Write gene set dic to gmt format
-def write_dic2gmt(dic, name, path=''):
-    with open(join(path,name+'.gmt'), 'w') as fp:
+def write_dic2gmt(dic, fn):
+    with open(fn, 'w') as fp:
         for db, term in dic.items():
             gmt = [db, db] + list(term)
             fp.write("\t".join(gmt))
@@ -216,6 +216,21 @@ def cluster(setR, enr):
     enr.loc[:,'cluster'] = cls
  
     return enr
+
+def cluster_jacc(enr):
+    enr = enr.copy()
+    dd = jaccard_matrx(enr)
+
+    ## Look to package fastclsuter !!!!!
+    metric='euclidean'
+    method='average'
+    links = linkage(dd.values, method=method, metric=metric)
+    cls = fcluster(links,2, 'distance')
+    enr.loc[:,'cluster_jacc'] = cls
+ 
+    return enr
+
+
 
 
 def make_graph(setR, enr, kappa=0.4, draw=False, palette='tab20'):
