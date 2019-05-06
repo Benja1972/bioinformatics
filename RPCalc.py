@@ -64,28 +64,35 @@ SCRIPTS = join(WORKDIR,'scripts')
 DATADIR = join(WORKDIR,'data')
 
 ### Main
-enh = pb.BedTool(join(DATADIR,'tracks/Enhancers_ChromHMM.bed'))
+
+# Enh TLX3
+#~ enh = pb.BedTool(join(DATADIR,'tracks/Enhancers_ChromHMM.bed'))
+
+# Enh RAG
+enh = pb.BedTool(join(DATADIR,'tracks/Enhancers_RAG_ChromHMM.bed'))
+
 pad = 3e3 # 3k padding 
 
 # H3K27ac
-#~ tlx_27ac = join(DATADIR,'tracks/ChiP-seq_tracks/mm9_bigWig/TLX3_H3K27ac_mm9.bw')
-#~ rag_27ac = join(DATADIR,'tracks/ChiP-seq_tracks/mm9_bigWig/RAG_H3K27ac_mm9.bw')
+tlx_27ac = join(DATADIR,'tracks/ChiP-seq_tracks/mm9_bigWig/TLX3_H3K27ac_mm9.bw')
+rag_27ac = join(DATADIR,'tracks/ChiP-seq_tracks/mm9_bigWig/RAG_H3K27ac_mm9.bw')
+
+enh_27ac_tlx = bigWig2bed_pot(tlx_27ac,enh,'mm9',pad=pad)
+rag_27ac_tlx = bigWig2bed_pot(rag_27ac,enh,'mm9',pad=pad)
+
+enh_27ac_tlx.to_csv(join(DATADIR,'tracks/Enhancers_RAG_ChromHMM_TLX3_H3K27ac.csv'))
+rag_27ac_tlx.to_csv(join(DATADIR,'tracks/Enhancers_RAG_ChromHMM_RAG_H3K27ac.csv'))
 
 
 # PolII 
-tlx_polII = join(DATADIR,'tracks/ChiP-seq_tracks/mm9_bigWig/TLX3_POLII_mm9.bw')
+#~ tlx_polII = join(DATADIR,'tracks/ChiP-seq_tracks/mm9_bigWig/TLX3_POLII_mm9.bw')
+
+#~ enh_PolII_tlx = bigWig2bed_pot(tlx_polII,enh,'mm9',pad=pad)
+
+#~ enh_PolII_tlx.to_csv(join(DATADIR,'tracks/Enhancers_ChromHMM_TLX3_PolII.csv'))
 
 
-enh_PolII_tlx = bigWig2bed_pot(tlx_polII,enh,'mm9',pad=pad)
 
-#~ enh_27ac_tlx = bigWig2bed_pot(tlx_27ac,enh,'mm9',pad=pad)
-#~ rag_27ac_tlx = bigWig2bed_pot(rag_27ac,enh,'mm9',pad=pad)
-
-
-#~ enh_27ac_tlx.to_csv(join(DATADIR,'tracks/Enhancers_ChromHMM_TLX3_H3K27ac.csv'))
-#~ rag_27ac_tlx.to_csv(join(DATADIR,'tracks/Enhancers_ChromHMM_RAG_H3K27ac.csv'))
-
-enh_PolII_tlx.to_csv(join(DATADIR,'tracks/Enhancers_ChromHMM_TLX3_PolII.csv'))
 
 
 

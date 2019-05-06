@@ -74,7 +74,7 @@ def gene_variants(gl,var,genes):
 
 def bed_variants(var,bed):
     """
-    Function colect variants in region bed file and out to variants file
+    Function collect variants in region bed file and out to variants file
     
     Parametrs
     ---------
