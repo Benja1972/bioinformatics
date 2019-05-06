@@ -23,7 +23,9 @@ import allel
 
 
 #vcf_tb = allel.vcf_to_dataframe(join(WGS,'Ehn_Active_TLX3_mut.vcf'),fields='*', numbers={'ALT': 1}, transformers=allel.ANNTransformer())
-vcf_tb = allel.vcf_to_dataframe(join(WGS,'TLX3_WGS.vcf.gz'),fields='*', numbers={'ALT': 1}, transformers=allel.ANNTransformer())
+vcf_tb = allel.vcf_to_dataframe(join(WGS,'TLX3_WGS.vcf.gz'),fields='*', numbers={'ALT': 1})
+
+vcf_tb = vcf_tb[vcf_tb['FILTER_PASS']==True]
 
 cols = ['CHROM', 'POS', 'REF', 'ALT','is_snp']
 
@@ -34,14 +36,14 @@ def kataegis(chrm,vcf_tb):
     vcf_ch = vcf_tb[vcf_tb['CHROM']==chrm].sort_values('POS',axis=0, ascending=True)
 
     vcf_ch['DIFF'] = vcf_ch['POS'].diff()
-    vcf_ch['logDIFF'] = np.log2(vcf_ch['DIFF'])
+    vcf_ch['logDIFF'] = np.log10(vcf_ch['DIFF'])
     vcf_ch['mut_TYPE'] = vcf_ch['REF']+'>'+vcf_ch['ALT']
     vcf_ch['mut_TYPE'][vcf_ch['is_snp']==False]='not_snp'
 
     f, ax = plt.subplots(figsize=(16.5, 6.5))
     hue_order  = ['A>C','A>G','A>T','C>A','C>G','C>T','G>A','G>C','G>T','T>A','T>C','T>G', 'not_snp']
     sns.scatterplot(x='POS', 
-                    y = 'DIFF', 
+                    y = 'logDIFF', 
                     hue='mut_TYPE',
                     hue_order = hue_order,
                     palette= 'tab20_r', #gnuplot_r', #tab20',
