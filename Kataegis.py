@@ -40,9 +40,9 @@ def kataegis(chrm,vcf_tb):
     vcf_ch['mut_TYPE'] = vcf_ch['REF']+'>'+vcf_ch['ALT']
     vcf_ch['mut_TYPE'][vcf_ch['is_snp']==False]='not_snp'
 
-    f, ax = plt.subplots(figsize=(16.5, 6.5))
+    f, ax = plt.subplots(figsize=(26.5, 6.5))
     hue_order  = ['A>C','A>G','A>T','C>A','C>G','C>T','G>A','G>C','G>T','T>A','T>C','T>G', 'not_snp']
-    sns.scatterplot(x='POS', 
+    sns.scatterplot(x= 'POS', #range(len(vcf_ch)), 
                     y = 'logDIFF', 
                     hue='mut_TYPE',
                     hue_order = hue_order,
@@ -53,8 +53,19 @@ def kataegis(chrm,vcf_tb):
     ax.set_title(chrm)
 
 
+from matplotlib.backends.backend_pdf import PdfPages
+
+
+#~ "pp = PdfPages(join(WGS,'Hypermutation_TLX3_WGS.pdf'))"
+
 for chrm in  list(vcf_tb['CHROM'].unique())[:2]:
     kataegis(chrm,vcf_tb)
+   #~ " plt.savefig(pp, format='pdf')"
+
+
+#~ pp.close()
+
+plt.show()
 
 
 
@@ -87,4 +98,3 @@ for chrm in  list(vcf_tb['CHROM'].unique())[:2]:
 #~ ax[1].set_ylim(0, 0.1)
 
 
-plt.show()
