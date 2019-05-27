@@ -17,6 +17,10 @@ DATADIR = join(WORKDIR,'data')
 WGS = join(DATADIR,'tracks/WGS-WES/Germline')
 
 
+import allel
+import deeptools.getScorePerBigWigBin as gs
+from scipy.signal import savgol_filter
+
 def kataegis(chrm,vcf_tb, shr=0):
 
     vcf_ch = vcf_tb[vcf_tb['CHROM']==chrm].sort_values('POS',axis=0, ascending=True)
@@ -44,61 +48,51 @@ def kataegis(chrm,vcf_tb, shr=0):
     return f, ax
 
 
+# BigWig track
 
-chrm = 'chr1'
+bw = join(DATADIR,'tracks/ChiP-seq_tracks/mm9_bigWig/TLX3_H3K27ac_mm9.bw')
+#~ bw = join(DATADIR,'tracks/ChiP-seq_tracks/mm9_bigWig/TLX3_H3K36me3_mm9.bw')
+#~ bw = join(DATADIR,'tracks/ChiP-seq_tracks/mm9_bigWig/TLX3_POLII_mm9.bw')
+
 
 # WGS track
-import allel
-
 vcf_tb = allel.vcf_to_dataframe(join(WGS,'TLX3_WGS.vcf.gz'),fields='*', numbers={'ALT': 1})
-
 vcf_tb = vcf_tb[vcf_tb['FILTER_PASS']==True]
 
 cols = ['CHROM', 'POS', 'REF', 'ALT','is_snp']
 
-vcf_tb = vcf_tb[cols]
+
+for chrm in  vcf_tb['CHROM'].unique()[:]:
+    vcf_f = vcf_tb[vcf_tb['CHROM']==chrm][cols]
 
 
 
+    f, ax = kataegis(chrm,vcf_f,shr=0)
 
-#vcf_tb = vcf_tb[(vcf_tb['CHROM']==chrm) & (vcf_tb['POS']<x.max()) & (vcf_tb['POS']>x.min())]
-#vcf_tb = vcf_tb[(vcf_tb['CHROM']==chrm) & (vcf_tb['POS']<x.max()) & (vcf_tb['POS']>x.min())]
+    st = 0
+    end = vcf_f['POS'].max() #1.5e8
+    step=200
 
-f, ax = kataegis(chrm,vcf_tb)
-
-
-# test
-import deeptools.getScorePerBigWigBin as gs
-
-bw = join(DATADIR,'tracks/ChiP-seq_tracks/mm9_bigWig/TLX3_H3K27ac_mm9.bw')
-
-
-
-#~ chrm = 'chr1'
-st = 0
-end = vcf_tb['POS'].max() #1.5e8
-step=200
-
-vl = gs.countFragmentsInRegions_worker(chrm, 
-                                        int(st), 
-                                        int(end), 
-                                        [bw], 
-                                        stepSize=step,
-                                        binLength=step, 
-                                        save_data=False)
+    vl = gs.countFragmentsInRegions_worker(chrm, 
+                                            int(st), 
+                                            int(end), 
+                                            [bw], 
+                                            stepSize=step,
+                                            binLength=step, 
+                                            save_data=False)
 
 
-xv = np.arange(st,end,step)
-yv = np.squeeze(vl[0])
-yvf = savgol_filter(yv,10,3)
+    xv = np.arange(st,end,step)
+    yv = np.squeeze(vl[0])
 
+    yvf = savgol_filter(yv,9,3)
 
-
-ax1 = ax.twinx()
-colr = 'r'
-ax1.plot(xv,yvf, '--.',color=colr, MarkerSize=0.8, LineWidth=0.1)
-ax1.set_ylim(0, 3)
-ax1.tick_params(axis='y', labelcolor=colr)
+    ax1 = ax.twinx()
+    colr = 'r'
+    ax1.plot(xv,yvf, '--.',color=colr, MarkerSize=0.8, LineWidth=0.1)
+    ax1.set_ylabel(bw.split('/')[-1].split('.')[0])
+    ax1.set_ylim(0, 3)
+    ax1.tick_params(axis='y', labelcolor=colr)
 
 
 
