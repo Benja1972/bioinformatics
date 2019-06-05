@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib.cm import get_cmap
 import scipy.stats as st
 from scipy.cluster.hierarchy import fcluster, linkage
 import networkx as nx
@@ -231,14 +232,14 @@ def cluster_jacc(enr):
     return enr
 
 
+def sigmoid(x):                                        
+   return 1 / (1 + np.exp(-x))
 
-
-def make_graph(setR, enr, kappa=0.4, draw=False, palette='tab20'):
+def make_graph(setR, enr_in, kappa=0.4):
     setR = set(setR)
-    ## Cluster
-    enr = cluster(setR,enr)
+
     ## Network
-    terms = list(enr.index)
+    terms = list(enr_in.index)
     n = len(terms)
     col = ['source', 'target', 'dist', 'comm_genes']
     nt = pd.DataFrame(columns=col)
@@ -246,10 +247,10 @@ def make_graph(setR, enr, kappa=0.4, draw=False, palette='tab20'):
 
     for i in range(len(terms)):
         ter1 = terms[i]
-        set1 = set(list(enr['term_genes'].loc[ter1]))
+        set1 = set(list(enr_in['term_genes'].loc[ter1]))
         for j in range(i):
             ter2 = terms[j]
-            set2 = set(list(enr['term_genes'].loc[ter2]))
+            set2 = set(list(enr_in['term_genes'].loc[ter2]))
             cm = list(setR & set1 & set2)
             rw = pd.DataFrame([[ter1, ter2, coeff_kappa(setR,set1,set2), cm]], columns=col)
             nt = nt.append(rw,  ignore_index=True)
@@ -258,36 +259,69 @@ def make_graph(setR, enr, kappa=0.4, draw=False, palette='tab20'):
     nt =  nt[nt['dist']>kappa]
 
     ls = list(set(list(nt['source']))|set(list(nt['target'])))
-    nt_tb = enr[enr.index.isin(ls)]
+    enr_out = enr_in[enr_in.index.isin(ls)]
+    
+    ## Cluster
+    enr_out = cluster(setR,enr_out)
+    enr_out.sort_values('cluster', axis=0, inplace = True)
     
     ## Graph
     G = nx.Graph()
     
-    for tr in nt_tb.index:
+    for tr in enr_out.index:
         G.add_node( tr,
-                    genes = nt_tb.loc[tr]['genes'],
-                    num_list = nt_tb.loc[tr]['num_list'],
-                    num_term = nt_tb.loc[tr]['num_term'],
-                    pVal = nt_tb.loc[tr]['p-Val'],
-                    padj = nt_tb.loc[tr]['p-adj'],
-                    mlog10pVal = nt_tb.loc[tr]['-log10(p-Val)'],
-                    cluster =  nt_tb.loc[tr]['cluster'])
+                    genes = enr_out.loc[tr]['genes'],
+                    num_list = enr_out.loc[tr]['num_list'],
+                    num_term = enr_out.loc[tr]['num_term'],
+                    ratio = enr_out.loc[tr]['num_list']/enr_out.loc[tr]['num_term'],
+                    pVal = enr_out.loc[tr]['p-Val'],
+                    padj = enr_out.loc[tr]['p-adj'],
+                    mlog10pVal = enr_out.loc[tr]['-log10(p-Val)'],
+                    cluster =  enr_out.loc[tr]['cluster'])
 
     for nm in nt.index:
         G.add_edge( nt.loc[nm]['source'],
                     nt.loc[nm]['target'],
                     weight = nt.loc[nm]['dist'])       
 
-    if draw:
-        cl = [G.nodes[v]['cluster'] for v in G] 
-        sz = [G.nodes[v]['mlog10pVal']*100 for v in G] 
+    return G, enr_out , nt 
 
-        f, ax = plt.subplots(figsize=(10, 10))
-             
-        nx.draw(G, pos=nx.spring_layout(G),
-                with_labels = True, 
-                node_color = cl,
-                node_size =  sz,
-                font_size=8,
-                cmap = palette) 
-    return nt, nt_tb, G
+
+
+def draw_graph(G,spring = 1.0, pval_prcnt=0.8, palette='tab20'):
+    cl = [float(G.nodes[v]['cluster']) for v in G] 
+    sz = [G.nodes[v]['mlog10pVal']*100 for v in G]
+    ec = [G.edges[u, v]['weight'] for u,v in G.edges]
+    for u,v in G.edges:
+        G.edges[u, v]['spring'] = sigmoid(G.edges[u, v]['weight'])*(spring/500)
+    
+    kappa = min(ec)
+    mpValshr=pval_prcnt*max(sz)/100
+    lb_M = {v:v for v in G if G.nodes[v]['mlog10pVal']>mpValshr}
+    lb_m = {v:v for v in G if G.nodes[v]['mlog10pVal']<=mpValshr} 
+    
+    f, ax = plt.subplots(figsize=(15, 15))
+    pos=nx.spring_layout(G,k=0.1, weight = 'spring')     
+    
+    
+    #~ cmap = get_cmap(name='viridis')
+    #~ colors = cmap(np.linspace(0, 1, max(cl)))
+    nx.draw(G, pos=pos,
+            node_color = cl,
+            vmin = 1.,
+            vmax = 20., ##FIX hardcoded number for tab20
+            node_size =  sz,
+            edge_color =  ec,
+            edge_vmin = 0.6*kappa,
+            edge_vmax = 1.2+kappa,
+            edge_cmap =plt.cm.Greys,
+            cmap = palette) 
+    
+    nx.draw_networkx_labels(G, pos=pos,
+                            labels = lb_M,
+                            font_size=14,
+                            font_weight='bold')
+
+    nx.draw_networkx_labels(G, pos=pos,
+                            labels = lb_m,
+                            font_size=6)

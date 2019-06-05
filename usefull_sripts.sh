@@ -66,3 +66,17 @@ closest-features TLX3_14_E6_sorted.bed genes.bed > TLX3_E6_genes.bed
 # Remove 5th column in bed
 
 cat file_in.bed | awk '{print $1 "\t" $2 "\t" $3 "\t" $4}' > file_out.bed
+
+
+
+---------------------------------------
+# Pythonic way from BedGraph to BigWig
+import pybedtools as pb
+
+bG = 'Hypermut_st600_TLX3_WGS.sorted.bedgraph'
+bw ='Hypermut_st600_TLX3_WGS.bigwig'
+
+bG=pb.BedTool(bG)
+
+pb.contrib.bigwig.bedgraph_to_bigwig(bG,'mm9',bw)
+

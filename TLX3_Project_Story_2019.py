@@ -318,27 +318,31 @@ enr = erl.enrich_gs(FIN_up_genes,gss, path_lib='../data/EnrichrLibs')
 
 # In[23]:
 
+# Make additional calculation on existing columns for visualization
+enr.loc[:,'ass_genes_percnt'] = 100*enr.loc[:,'num_list']/enr.loc[:,'num_term']
+
+
 # For futher analysis it is convinient to filter terms by p-value
-enr_a = enr[enr['p-Val']<0.001]
+enr_a = enr[(enr['p-Val']<0.001)&(enr['ass_genes_percnt']>8)]
 
 
-# In[24]:
+# In[29]:
 
 ## Cluster: this calculate and add cluster number column
-enr_a = erl.cluster(FIN_up_genes,enr_a)
-
-# Make additional calculation on existing columns for visualization
-enr_a.loc[:,'ass_genes_percnt'] = 100*enr_a.loc[:,'num_list']/enr_a.loc[:,'num_term']
-enr_a.sort_values('cluster', axis=0, inplace = True)
+#enr_a = erl.cluster(FIN_up_genes,enr_a)
+cm = 'tab20'
+enr_c, G, nt, nt_b =erl.make_graph(FIN_up_genes, enr_a, kappa=0.4, draw=True, palette=cm)
 
 
-# In[25]:
+
+
+# In[30]:
 
 # --- Plot ---
 # use consistent discrete palette
-cm = 'tab20'
 
-ds = enr_a.head(120)
+enr_c.sort_values('cluster', axis=0, inplace = True)
+ds = enr_c.head(120)
 
 f, ax = plt.subplots(figsize=(22, 24))
 sns.barplot(y=ds.index,
@@ -354,17 +358,17 @@ ax.set_title('UP genes regulated by UP enhancers with high Tlx3 peaks')
 
 # ## Calculate independent distance on selected gene sets (terms)
 
-# In[26]:
+# In[31]:
 
 # Calculate independent distance on selected gene sets (terms)
-enr_a = erl.cluster_jacc(enr_a)
+enr_c = erl.cluster_jacc(enr_c)
 
 
 # ## Double clustering: close terms in both categories
 
-# In[27]:
+# In[32]:
 
-enr_grp = enr_a.groupby(by=['cluster','cluster_jacc'],axis=0)
+enr_grp = enr_c.groupby(by=['cluster','cluster_jacc'],axis=0)
 
 # Fucntion takes double cluster and return common genes  
 
@@ -377,7 +381,7 @@ def get_cluster(cl, enr_grp):
     return gn_clust
 
 
-# In[28]:
+# In[33]:
 
 # Print clustes and common genes 
 
@@ -391,14 +395,14 @@ for k in enr_grp.groups.keys():
 #'num_terms :',len(list(enr_grp.groups[k]))
 
 
-# In[29]:
+# In[34]:
 
 # Genes common in clusters 
 for k in enr_grp.groups.keys():
     print(k, get_cluster(k, enr_grp))
 
 
-# In[30]:
+# In[35]:
 
 # Fucntion takes double cluster and return common genes in terms  
 
@@ -411,7 +415,7 @@ def get_cluster_terms(cl, enr_grp):
     return gn_clust
 
 
-# In[31]:
+# In[36]:
 
 #tm = enr_a.loc[enr_grp.groups[(7,4)]]
 
@@ -422,7 +426,7 @@ def get_cluster_terms(cl, enr_grp):
 
 # ## Intersect mutation in TLX3 with active enhancers from privious analysis
 
-# In[32]:
+# In[37]:
 
 ## Up enhancers with up genes
 # up_enh_up_genes -- list of enhancers
@@ -436,7 +440,7 @@ print('Up enhancers of up-regulated genes  = ',len(enh_up_up_bd))
 # tlx_gn -- variants in TLX3
 
 
-# In[33]:
+# In[38]:
 
 # Variant inside active enhancers
 
@@ -444,31 +448,31 @@ enh_mut_tlx = emm.bed_variants(tlx_gn,enh_up_up_bd)
 print('Variants from TLX3 WGS in active enhacers = ', len(enh_mut_tlx))
 
 
-# In[34]:
+# In[39]:
 
 # Save only if new analysis done
 #~ enh_mut_tlx.saveas(join(WGS,'Ehn_Active_TLX3_mut.vcf'))
 
 
-# In[35]:
+# In[40]:
 
 # Load table
 import allel
 enh_mut_tlx_tb = allel.vcf_to_dataframe(join(WGS,'Ehn_Active_TLX3_mut.vcf'),fields='*', numbers={'ALT': 4}, transformers=allel.ANNTransformer())
 
 
-# In[36]:
+# In[41]:
 
 enh_mut_tlx_tb_fltr = enh_mut_tlx_tb[enh_mut_tlx_tb['FILTER_PASS']==True]
 
 
-# In[37]:
+# In[42]:
 
 print('Variants from TLX3 WGS in active enhacers = ', len(enh_mut_tlx_tb))
 print('Variants from TLX3 WGS in active enhacers PASS filter = ', len(enh_mut_tlx_tb_fltr))
 
 
-# In[38]:
+# In[43]:
 
 #enh_mut_tlx_tb[['FILTER_map','FILTER_PASS','FILTER_mrd20','FILTER_LowQual','FILTER_mrd10','FILTER_mrd30']].head(40)
 #tnm = plt.hist(enh_mut_tlx_tb['REF'].apply(len), bins=40)
@@ -477,7 +481,7 @@ print('Variants from TLX3 WGS in active enhacers PASS filter = ', len(enh_mut_tl
 
 # ## Motifs around mutations in active enhancers
 
-# In[40]:
+# In[44]:
 
 # Motifs models DB
 db_f = '/home/sergio/tools/deepbind/db/db.tsv'
@@ -491,7 +495,12 @@ db_tf = db[db['Type']=='TF']
 db_tf = db_tf[db_tf['Species']=='Mus musculus']
 
 
-# In[41]:
+# In[45]:
+
+len(db_tf)
+
+
+# In[46]:
 
 # Reference genome fasta
 from pyfaidx import Fasta
@@ -499,7 +508,7 @@ fn = '/home/sergio/media/NAS4/PFlab/TLX3_project/WES-seq/references/mouse_mm9_re
 fa = Fasta(fn)
 
 
-# In[ ]:
+# In[47]:
 
 # mut_tb = enh_mut_tlx_tb[['CHROM', 'POS', 'REF', 'ALT_1','is_snp']]
 # mut_tb = mut_tb.assign(REF_Prot="",
@@ -557,7 +566,7 @@ fa = Fasta(fn)
 # mut_tb.to_csv(join(WGS,'Variants_Enhancers_Motifs_scores.csv'))
 
 
-# In[42]:
+# In[48]:
 
 mut_tb = pd.DataFrame.from_csv(join(WGS,'Variants_Enhancers_Motifs_scores.csv'))
 
@@ -565,7 +574,7 @@ mut_tb = pd.DataFrame.from_csv(join(WGS,'Variants_Enhancers_Motifs_scores.csv'))
 # ### Select motifs with high score and ones which change TFBS
 # #### Sort selected motifs by score changes caused by mutation
 
-# In[44]:
+# In[49]:
 
 mut_tb_fltr = mut_tb[(mut_tb['REF_Prot'] != mut_tb['ALT_Prot']) & (mut_tb['REF_score_ref']>2)]
 mut_tb_fltr['REF_score_diff'] = mut_tb_fltr['REF_score_ref'] - mut_tb_fltr['REF_score_alt']
@@ -573,14 +582,14 @@ mut_tb_fltr['REF_score_diff'] = mut_tb_fltr['REF_score_ref'] - mut_tb_fltr['REF_
 mut_tb_fltr_srt = mut_tb_fltr.sort_values('REF_score_diff',axis=0, ascending=False)
 
 
-# In[46]:
+# In[50]:
 
 mut_tb_fltr_srt.head(20)
 
 
 # ## Find enhacers with TFS changes and associated genes
 
-# In[54]:
+# In[51]:
 
 # Back to bed and enhancers list
 mut_bd = mut_tb_fltr_srt[mut_tb_fltr_srt['REF_score_diff']>1][['CHROM','POS','REF','REF_Prot']]
@@ -597,50 +606,54 @@ mut_tf_enh.rename(columns={'thickEnd':'protein'}, inplace=True)
 genes_mut_tf_enh = emm.gene_enh(list(mut_tf_enh['name']),enh2gn)
 
 
-# In[95]:
+# In[52]:
 
 print('Genes with enhacers with TFBS cahnges = ', len(genes_mut_tf_enh)) 
 
 
-# In[99]:
+# In[53]:
 
 print('Genes with enhacers with TFBS cahnges:\n', genes_mut_tf_enh) 
 
 
 # ### Genes enrichments
 
-# In[82]:
+# In[54]:
 
 genes_mut_tf_enh = [x.upper() for x in genes_mut_tf_enh]
 
 enr_genes_mut_tf_enh = erl.enrich_gs(genes_mut_tf_enh,gss, path_lib='../data/EnrichrLibs')
 
 
-# In[83]:
-
-# For futher analysis it is convinient to filter terms by p-value
-enr_genes_mut_tf_enh = enr_genes_mut_tf_enh[enr_genes_mut_tf_enh['p-Val']<0.001]
-
-## Cluster: this calculate and add cluster number column
-enr_genes_mut_tf_enh = erl.cluster(genes_mut_tf_enh,enr_genes_mut_tf_enh)
+# In[56]:
 
 # Make additional calculation on existing columns for visualization
 enr_genes_mut_tf_enh.loc[:,'ass_genes_percnt'] = 100*enr_genes_mut_tf_enh.loc[:,'num_list']/enr_genes_mut_tf_enh.loc[:,'num_term']
-enr_genes_mut_tf_enh.sort_values('cluster', axis=0, inplace = True)
 
 
-# In[96]:
+# For futher analysis it is convinient to filter terms by p-value
+enr_genes_mut_tf_enh = enr_genes_mut_tf_enh[(enr_genes_mut_tf_enh['p-Val']<0.001)&(enr_genes_mut_tf_enh['ass_genes_percnt']>5)]
+
+## Cluster: this calculate and add cluster number column
+#enr_genes_mut_tf_enh = erl.cluster(genes_mut_tf_enh,enr_genes_mut_tf_enh)
+enr_genes_mut_tf_enh_c, G, nt, nt_b =erl.make_graph(genes_mut_tf_enh, enr_genes_mut_tf_enh, kappa=0.4, draw=True, palette=cm)
+
+
+
+
+# In[50]:
 
 #enr_genes_mut_tf_enh
 
 
-# In[89]:
+# In[57]:
 
+enr_genes_mut_tf_enh_c.sort_values('cluster', axis=0, inplace = True)
 # --- Plot ---
 # use consistent discrete palette
 cm = 'tab20'
 
-ds = enr_genes_mut_tf_enh.head(10)
+ds = enr_genes_mut_tf_enh_c.head(10)
 
 f, ax = plt.subplots(figsize=(22, 6))
 sns.barplot(y=ds.index,
@@ -652,6 +665,11 @@ sns.barplot(y=ds.index,
             palette = cm)
 ax.set_title('Genes for UP enhancers with TF mutations')
 
+
+
+# In[58]:
+
+ds.head()
 
 
 # In[ ]:
