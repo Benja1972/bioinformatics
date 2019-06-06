@@ -20,6 +20,29 @@ from matplotlib.font_manager import FontProperties
 import matplotlib as mpl
 
 
+def closest_genes(bed,genes):
+    """
+    Function finds closest genes regions in bed 
+    
+    Parametrs
+    ---------
+    bed : bed file with regions; ex. bed = pb.BedTool('regions.bed')
+    genes : bed with ref genes; ex. genes = pb.BedTool('mm9.refGene.bed')
+    
+    Output
+    ------
+    gl : gene list 
+    """
+    bed = bed.sort()
+    near = bed.closest(genes, d=True)
+    near_d = near.to_dataframe()
+    
+    gl = list(near_d['thickStart'].str.unique())
+    
+    return gl
+
+
+
 def enh_gene(genl,df):
     if isinstance(genl, str):
         genl = [genl]
