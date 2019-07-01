@@ -110,7 +110,8 @@ def hypmut_bw(vcf,bw,step=1000,nstep=50,shr=0.8,genome='mm9'):
         x_r = x[:-nstep]
 
         cr_f = np.zeros(x_r.shape)
-
+        
+        # rolling correlation: for pandas DF -- df['A'].rolling(10).corr(df['B'])
         for i in range(len(x_r)):
             cr_f[i] = np.corrcoef(y[i:i+nstep],yb[i:i+nstep])[0,1]
 

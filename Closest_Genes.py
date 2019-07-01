@@ -16,7 +16,7 @@ DATADIR = join(WORKDIR,'data')
 
 def closest_genes(bed,genes):
     bed = bed.sort()
-    near = bed.closest(genes, d=True)
+    near = bed.closest(genes, D='ref')
     near_d = near.to_dataframe()
     
     gl = list(near_d['thickStart'].str.upper().unique())
@@ -68,12 +68,12 @@ enr_out.sort_values('cluster', axis=0, inplace = True)
 
 # --- Plot ---
 cm = 'tab20'
-erl.draw_graph(G, spring=100, pval_prcnt=0.7, palette= cm)
+erl.draw_graph(G, spring=500, pval_prcnt=0.7, palette= cm)
 
 
 ds = enr_out.head(40)
 
-f, ax = plt.subplots(figsize=(22, 24))
+f, ax = plt.subplots(figsize=(12, 12))
 sns.barplot(y=ds.index,
             x='-log10(p-Val)',
             ax = ax, 

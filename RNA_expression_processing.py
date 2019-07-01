@@ -1,5 +1,3 @@
-from __future__ import  division
-from functools import reduce
 from os.path import join 
 
 import numpy as np
