@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.colors
 from matplotlib.cm import get_cmap
 import scipy.stats as st
 from scipy.cluster.hierarchy import fcluster, linkage
@@ -18,6 +19,37 @@ def log2p1(x):
 
 def nlog10(x):
     return -np.log10(x)
+
+
+
+def word_count(ls_sent):
+    sent = ''
+    
+    for sn in ls_sent:
+        sent += sn
+        sent += ' '
+    
+    for char in '():/.,\n':
+        sent=sent.replace(char,' ')
+        sent = sent.lower()
+    
+    counts = dict()
+    words = sent.split()
+    words_c = words.copy()
+    
+    eng_words = ['to','and','of','by','on', 'from', 'the', 'in', 
+                'via', 'over','the','from', 'any','at']
+    words_c = [ x for x in words if x not in eng_words ]
+
+    
+    for word in words_c:
+        if word in counts:
+            counts[word] += 1
+        else:
+            counts[word] = 1
+
+    return counts
+
     
 # == Write gene set in gmt format
 def write_gmt(st, name, fn):
@@ -140,6 +172,7 @@ def enrich(setR,gs):
     enr = enr.astype({'p-Val':'float', 'num_list':'int', 'num_term':'int'})
 
     enr = enr[enr['num_list']>0 ]
+    enr = enr[enr['num_term']>0 ]
     enr['p-adj'] = p_adjust(enr['p-Val'])
 
     enr['-log10(p-adj)'] =  - np.log10(enr.loc[:,'p-adj']).values
@@ -205,7 +238,7 @@ def jaccard_matrx(enr):
 
 
 
-def cluster(setR, enr):
+def cluster(setR, enr, deep=2):
     enr = enr.copy()
     dd = kappa_matrx(setR,enr)
 
@@ -213,7 +246,7 @@ def cluster(setR, enr):
     metric='euclidean'
     method='average'
     links = linkage(dd.values, method=method, metric=metric)
-    cls = fcluster(links,2, 'distance')
+    cls = fcluster(links,deep, 'distance')
     enr.loc[:,'cluster'] = cls
  
     return enr
@@ -286,10 +319,61 @@ def make_graph(setR, enr_in, kappa=0.4):
 
     return G, enr_out , nt 
 
+def make_graph_n(setR, enr_in, kappa=0.4):
+    setR = set(setR)
+    terms = list(enr_in.index)
+
+    G = nx.Graph()
+    
+    for tr in terms:
+        G.add_node( tr,
+                    genes = enr_in.loc[tr]['genes'],
+                    num_list = enr_in.loc[tr]['num_list'],
+                    num_term = enr_in.loc[tr]['num_term'],
+                    ratio = enr_in.loc[tr]['num_list']/enr_in.loc[tr]['num_term'],
+                    pVal = enr_in.loc[tr]['p-Val'],
+                    padj = enr_in.loc[tr]['p-adj'],
+                    mlog10pVal = enr_in.loc[tr]['-log10(p-Val)'],
+                    cluster =  enr_in.loc[tr]['cluster'])
+
+    for tri in terms:
+        seti = set(list(enr_in['term_genes'].loc[tri]))
+        for tro in terms:
+            ed = tri,tro
+            if not G.has_edge(*ed):
+                seto = set(list(enr_in['term_genes'].loc[tro]))
+                dist = coeff_kappa(setR,seti,seto)
+                if dist>kappa:
+                    G.add_edge(*ed, weight=dist)
+    
+
+    return G
 
 
-def draw_graph(G,spring = 1.0, pval_prcnt=0.8, palette='tab20'):
-    cl = [float(G.nodes[v]['cluster']) for v in G] 
+
+
+def categorical_cmap(nc, nsc, cmap="tab10", continuous=False):
+    if nc > plt.get_cmap(cmap).N:
+        raise ValueError("Too many categories for colormap.")
+    if continuous:
+        ccolors = plt.get_cmap(cmap)(np.linspace(0,1,nc))
+    else:
+        ccolors = plt.get_cmap(cmap)(np.arange(nc, dtype=int))
+    cols = np.zeros((nc*nsc, 3))
+    for i, c in enumerate(ccolors):
+        chsv = matplotlib.colors.rgb_to_hsv(c[:3])
+        arhsv = np.tile(chsv,nsc).reshape(nsc,3)
+        arhsv[:,1] = np.linspace(chsv[1],0.25,nsc)
+        arhsv[:,2] = np.linspace(chsv[2],1,nsc)
+        rgb = matplotlib.colors.hsv_to_rgb(arhsv)
+        cols[i*nsc:(i+1)*nsc,:] = rgb       
+    cmap = matplotlib.colors.ListedColormap(cols)
+    return cmap
+
+
+def draw_graph(G,spring = 1.0, pval_prcnt=0.8, palette='gnuplot'):
+    cl = [int(G.nodes[v]['cluster']) for v in G] 
+    nc = len(set(cl))
     sz = [G.nodes[v]['mlog10pVal']*100 for v in G]
     ec = [G.edges[u, v]['weight'] for u,v in G.edges]
     for u,v in G.edges:
@@ -300,28 +384,33 @@ def draw_graph(G,spring = 1.0, pval_prcnt=0.8, palette='tab20'):
     lb_M = {v:v for v in G if G.nodes[v]['mlog10pVal']>mpValshr}
     lb_m = {v:v for v in G if G.nodes[v]['mlog10pVal']<=mpValshr} 
     
-    f, ax = plt.subplots(figsize=(15, 15))
+    f, ax = plt.subplots(figsize=(10, 10))
     pos=nx.spring_layout(G,k=0.1, weight = 'spring')     
-    
-    
-    #~ cmap = get_cmap(name='viridis')
-    #~ colors = cmap(np.linspace(0, 1, max(cl)))
+
+    if nc >20:
+        cmpl  = categorical_cmap(nc, 1, cmap=palette, continuous=True)
+    elif nc>10:
+        cmpl  = categorical_cmap(nc, 1, cmap="tab20")
+    else:
+        cmpl  = categorical_cmap(nc, 1, cmap="tab10")    
+
     nx.draw(G, pos=pos,
             node_color = cl,
-            vmin = 1.,
-            vmax = 20., ##FIX hardcoded number for tab20
+            #~ vmin = 1.,
+            #~ vmax = 20., ##FIX hardcoded number for tab20
             node_size =  sz,
             edge_color =  ec,
             edge_vmin = 0.6*kappa,
             edge_vmax = 1.2+kappa,
             edge_cmap =plt.cm.Greys,
-            cmap = palette) 
+            cmap = cmpl) 
     
     nx.draw_networkx_labels(G, pos=pos,
                             labels = lb_M,
-                            font_size=14,
+                            font_size=12,
                             font_weight='bold')
 
     nx.draw_networkx_labels(G, pos=pos,
                             labels = lb_m,
-                            font_size=6)
+                            font_size=8)
+    plt.tight_layout()

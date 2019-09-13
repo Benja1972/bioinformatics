@@ -49,27 +49,32 @@ def reg_network(gl,rn_df, type='target'):
 
     terms = list(set(list(rn_gl['target_symbol'].unique())) | set(list(rn_gl['regulator_symbol'].unique())))
 
-
-
     G = nx.DiGraph()
 
     for tr in terms:
         if tr in tf:
             typ, cl = 'tf','c'
+            if rn_df[(rn_df['regulator_symbol']==tr) & (rn_df['target_symbol']==tr)].empty:
+                loop=0
+            else:
+                loop=1
+
         elif tr in mr:
             typ, cl = 'mr','m'
+            loop = 0
         else:
             typ, cl = 'gn','g'
+            loop = 0
         
         if tr in gl:
             fl=1
         else:
             fl=0
-            
-            
+
         G.add_node( tr,
                     typ = typ,
                     color=cl,
+                    loop = loop,
                     from_list=fl)
 
 
@@ -92,8 +97,9 @@ def draw_reg_network(G, spring=0.35):
     """
     cl =  [G.nodes[v]['color'] for v in G]
     edc = [G.nodes[v]['from_list'] for v in G]
-    cm = {1:'#333333',0:'w'}
-    lw = {1: 2,0:0.2}
+    lwl =  [2*G.nodes[v]['loop'] for v in G]
+    cm = {1:'#E47800',0:'k'}
+    lw = {1: 2,0:0.4}
     edm = [cm[i] for i in edc]
     elw = [lw[i] for i in edc]
 
@@ -109,9 +115,9 @@ def draw_reg_network(G, spring=0.35):
 
     nx.draw_networkx_nodes(G, pos=pos,
             node_color = cl,
-            node_size = 400,
-            edgecolors = edm,
-            linewidths = elw,
+            node_size = 500,
+            edgecolors = '#ED453F', #edm,
+            linewidths =  lwl,#elw,
             alpha=0.9)
 
     nx.draw_networkx_edges(G, pos=pos, 

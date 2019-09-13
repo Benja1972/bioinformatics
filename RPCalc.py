@@ -43,15 +43,9 @@ def bigWig2bed_pot(bw,bed,genome,pad=1e5,step =1, alpha=10):
         
         
         vl = gs.countFragmentsInRegions_worker(chrom, int(st), int(end), [bw], stepSize=step,binLength=step, save_data=False)
-        #vl = gs.countFragmentsInRegions_worker('chr9', 69304600, 69306601, [bw], stepSize=2,binLength=2, save_data=False)
         vl = np.transpose(np.squeeze(vl[0]))
-        #print(vl)
-        #print(values)
-
-        #values  = np.hstack((np.zeros(st - cnt + pad),values,np.zeros(cnt + pad - end +1 )))
         vl  = np.hstack((np.zeros(st - cnt + pad),vl,np.zeros(cnt + pad - end +1 )))
 
-        #df.loc[i,'RP'] = np.dot( values, wt)
         df.loc[i,'RP'] = np.dot( vl, wt)
     
     return df
