@@ -1,5 +1,3 @@
-
-
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors
@@ -138,7 +136,6 @@ def make_graph(setR, enr_in, kappa=0.001):
             if not G.has_edge(*ed):
                 seto = set(list(enr_in['term_genes'].loc[tro]))
                 dist = erl.coeff_kappa(setR,seti,seto)
-                #print(dist)
                 if dist>kappa:
                     G.add_edge(*ed, weight=dist)
     
@@ -174,23 +171,22 @@ gss = [
 enr = erl.enrich_gs(gl,gss, path_lib=lib_dir)
 
 #2= Filter terms by p-Val
-enr = enr[enr['p-Val']<0.007]
+enr = enr[enr['p-Val']<0.005]
 
 #3= Make claster by kappa coeff
-enr = erl.cluster(set(gl), enr, deep=3)
+enr = erl.cluster(set(gl), enr, deep=2)
 
 #3-1= Filter top clusters
-top_clusters = 20
+top_clusters = 18
 enr = enr[enr['cluster']<top_clusters]
 
 #4= Make clustered geneset 
-gs_clust,nt_cl = cluster_genset(enr, top_terms=3)
+gs_clust,nt_cl = cluster_genset(enr)
 
 #5= Enrich clustered geneset
 enr_clust = erl.enrich(gl,gs_clust)
 
 #6= Add cluster to table
-#enr_clust = pd.concat([enr_clust,nt_cl[['cluster']]],axis=1, sort=False)
 enr_clust = pd.concat([enr_clust,nt_cl.loc[enr_clust.index]['cluster']],axis=1, sort=False)
 
 #7= Make graphs
