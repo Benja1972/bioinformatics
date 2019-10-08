@@ -265,6 +265,46 @@ def cluster_jacc(enr):
     return enr
 
 
+def cluster_genset(enr,top_terms=5,top_keywords=5):
+    #enr_grp = enr.groupby(by=['cluster','cluster_jacc'],axis=0)
+    enr_grp = enr.groupby(by=['cluster'],axis=0)
+
+    ng = len(enr_grp.groups.keys())
+    cols = ['cloud_name', 'cluster','genes', 'top_terms', 'terms']
+    df = pd.DataFrame(index=range(ng), columns=cols)
+
+    for ic,k in enumerate(enr_grp.groups.keys()):
+        lst_0 =  enr_grp.groups[k]
+        clust = enr.loc[lst_0]
+        clust.sort_values('p-Val', axis=0, inplace=True)
+        clust_cut = clust.head(top_terms)
+        
+        gn_clust = set(clust_cut.iloc[0]['genes'])
+        for i in range(len(clust_cut)):
+            gn_clust = gn_clust & set(clust_cut.iloc[i]['genes'])
+
+        lst = list(clust_cut.index)
+        
+        lsto = [x.split('_')[0].split('(')[0] for x in lst_0 ]
+        fc = pd.DataFrame.from_dict(word_count(lsto), orient='index', columns=['counts'])
+        fc.sort_values('counts', axis=0, inplace=True, ascending=False)
+        fc.index = [ind+' ('+str(fc.loc[ind]['counts'])+')' for ind in fc.index]
+        fc_name = u'\u2295 '+u'\n\u2295 '.join(list(fc.index[:top_keywords]))
+        
+        df.loc[ic]['cloud_name'] = fc_name
+        df.loc[ic]['top_terms'] = list(lst)
+        df.loc[ic]['terms'] = list(lst_0)
+        df.loc[ic]['genes'] = list(gn_clust)
+        df.loc[ic]['cluster'] = k
+        
+
+    gs_cl = df[['cloud_name','genes']].set_index('cloud_name').T.to_dict('list')
+    gs_clust = {k:v[0] for k,v in gs_cl.items()}
+    df.set_index('cloud_name', inplace=True)
+    
+    return gs_clust, df
+
+
 def sigmoid(x):                                        
    return 1 / (1 + np.exp(-x))
 
@@ -413,4 +453,33 @@ def draw_graph(G,spring = 1.0, pval_prcnt=0.8, palette='gnuplot'):
     nx.draw_networkx_labels(G, pos=pos,
                             labels = lb_m,
                             font_size=8)
+    plt.tight_layout()
+
+
+def draw_direct(G, palette='gnuplot'):
+    cl = [int(G.nodes[v]['cluster']) for v in G] 
+    nc = len(set(cl))
+    sz = [G.nodes[v]['mlog10pVal']*100 for v in G]
+    ec = [G.edges[u, v]['weight'] for u,v in G.edges]
+
+    
+    f, ax = plt.subplots(figsize=(10, 8))
+    pos=nx.spring_layout(G)   
+    
+    if nc >20:
+        cmpl  = categorical_cmap(nc, 1, cmap=palette, continuous=True)
+    elif nc>10:
+        cmpl  = categorical_cmap(nc, 1, cmap="tab20")
+    else:
+        cmpl  = categorical_cmap(nc, 1, cmap="tab10")
+    
+    nx.draw(G, pos=pos,
+            node_color = cl,
+            node_size =  sz,
+            edge_color =  ec,
+            edge_cmap =plt.cm.Greys,
+            cmap = cmpl) 
+    
+    nx.draw_networkx_labels(G, pos=pos,
+                            font_size=12)
     plt.tight_layout()
