@@ -1,2 +1,5 @@
 
 usefull_sripts.txt
+.ipynb_checkpoints/
+__pycache__/
+_tmp/
